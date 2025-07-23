@@ -1,0 +1,24 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: brototype
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: bbk
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: bbk-admin
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  environment:
+    MONGO_URI: ${env:MONGO_URI}
+    JWT_KEY: ${env:JWT_KEY}
+
+functions:
+  api:
+    handler: src/admin/index.handler
+    events:
+      - httpApi:
+          path: /admin/{proxy+}
+          method: ANY
+
+plugins:
+  - serverless-offline
