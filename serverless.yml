@@ -11,6 +11,9 @@ provider:
   environment:
     MONGO_URI: ${env:MONGO_URI}
     JWT_KEY: ${env:JWT_KEY}
+    MULTIPART_THRESHOLD_MB: ${env:MULTIPART_THRESHOLD_MB}
+    AWS_BUCKET_NAME: ${env:AWS_BUCKET_NAME}
+    AWS_REGION: ${env:AWS_REGION}
 
 functions:
   api:

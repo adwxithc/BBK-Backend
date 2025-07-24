@@ -6,3 +6,9 @@ export interface IAdmin {
     createdAt?: string;
     updatedAt?: string;
 }
+
+
+export interface MediaFile {
+    contentType: string;
+    size?: number;
+}
