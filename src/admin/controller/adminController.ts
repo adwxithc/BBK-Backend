@@ -7,6 +7,7 @@ import { BadRequestError } from '@common/errors/bad-request-error';
 import { mediaUpload } from '@common/services/mediaUpload';
 import { uniqueString } from '@common/services/uniqueString';
 import { MediaFile } from '@common/types/data';
+import eventRepository from 'admin/repository/eventRepository';
 
 class AdminController {
     async login(req: Req, res: Res) {
@@ -105,6 +106,17 @@ class AdminController {
                 photos: photoResults,
                 videos: videoResults,
             },
+        });
+    }
+
+    async createEvent(req: Req, res: Res) {
+        const { title, description, photos = [], videos = [] } = req.body;
+        const event = { title, description, photos, videos };
+        const newEvent = await eventRepository.createEvent(event);
+        res.status(201).json({
+            success: true,
+            message: 'Event metadata stored successfully',
+            data: newEvent,
         });
     }
 }

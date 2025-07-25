@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { errorHandler } from 'common/middlewares/error-handler';
-import { adminRouter } from './routes/authRoutes';
+import { adminRouter } from './routes/adminRoutes';
 
 const app = express();
 
