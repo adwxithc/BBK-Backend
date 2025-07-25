@@ -7,6 +7,7 @@ import {
     createMediaSignedUrlValidations,
     loginValidations,
 } from '../validations/api';
+import protectAdmin from '@common/middlewares/protect';
 
 export function adminRouter(router: Router) {
     router.post(
@@ -19,12 +20,14 @@ export function adminRouter(router: Router) {
     router.post('/logout', adminController.logout);
     router.post(
         '/event-media/signed-url',
+        protectAdmin,
         createMediaSignedUrlValidations,
         validateRequest,
         asyncHandler(adminController.getSignedUrl)
     );
     router.post(
         '/event/create',
+        protectAdmin,
         createEventValidations,
         validateRequest,
         asyncHandler(adminController.createEvent)

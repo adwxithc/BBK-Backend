@@ -25,7 +25,7 @@ class AdminController {
             throw new BadRequestError('invalid email or password');
 
         const token = jWTToken.createJWT(
-            { email },
+            { email, name },
             process.env.JWT_KEY as string
         );
 

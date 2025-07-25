@@ -1,9 +1,11 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { errorHandler } from 'common/middlewares/error-handler';
 import { adminRouter } from './routes/adminRoutes';
+import cookieParser from "cookie-parser";
 
 const app = express();
 
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
