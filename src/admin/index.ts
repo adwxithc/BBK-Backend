@@ -1,5 +1,5 @@
 import serverless from 'serverless-http';
-import { connectToDatabase } from '../config/db';
+import { connectToDatabase } from '@common/config/db';
 import app from './app';
 
 
