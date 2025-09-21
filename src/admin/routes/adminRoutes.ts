@@ -10,6 +10,7 @@ import {
     createEventCategoryValidations,
     updateEventCategoryValidations,
     toggleActiveValidations,
+    getEventCategoriesValidations,
 } from '../validations/api';
 import protectAdmin from '@common/middlewares/protect';
 
@@ -52,6 +53,8 @@ export function adminRouter(router: Router) {
     router.get(
         '/event-category',
         protectAdmin,
+        getEventCategoriesValidations,
+        validateRequest,
         asyncHandler(eventCategoryController.getAllCategories)
     );
 

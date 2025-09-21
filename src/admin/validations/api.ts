@@ -1,4 +1,4 @@
-import { body } from 'express-validator';
+import { body, query } from 'express-validator';
 export const loginValidations = [
     body('email').isEmail().withMessage('Email must be valid'),
     body('password')
@@ -190,3 +190,21 @@ export const toggleActiveValidations = [
         .withMessage('isActive must be a boolean value'),
 ];
 
+export const getEventCategoriesValidations = [
+    query('isActive')
+        .optional()
+        .isBoolean()
+        .withMessage('isActive must be a boolean value (true or false)'),
+
+    query('page')
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage('Page must be a positive integer')
+        .toInt(),
+
+    query('limit')
+        .optional()
+        .isInt({ min: 1, max: 100 })
+        .withMessage('Limit must be a positive integer between 1 and 100')
+        .toInt(),
+];

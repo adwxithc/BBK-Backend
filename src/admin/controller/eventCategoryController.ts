@@ -64,10 +64,12 @@ class EventCategoryController {
             options.isActive = isActive === 'true';
         }
 
-        const categories = await eventCategoryRepository.findAll(options);
-        const total = await eventCategoryRepository.count(
-            isActive !== undefined ? { isActive: isActive === 'true' } : undefined
-        );
+        const [categories, total] = await Promise.all([
+            eventCategoryRepository.findAll(options),
+            eventCategoryRepository.count(
+                isActive !== undefined ? { isActive: isActive === 'true' } : undefined
+            )
+        ]);
 
         res.json({
             success: true,
