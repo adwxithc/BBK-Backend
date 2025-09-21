@@ -44,6 +44,19 @@ class AdminController {
         });
     }
 
+    checkAuth(req: Req, res: Res) {
+        if (!req.user) {
+            throw new BadRequestError('User not authenticated');
+        }
+        
+        const { email, name } = req.user;
+
+        res.json({
+            success: true,
+            data: { name, email },
+        });
+    }
+
     async getSignedUrl(req: Req, res: Res) {
         const { title, description, photos = [], videos = [] } = req.body;
 

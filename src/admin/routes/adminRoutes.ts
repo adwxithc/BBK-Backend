@@ -18,6 +18,7 @@ export function adminRouter(router: Router) {
     );
 
     router.post('/logout', adminController.logout);
+    router.get('/check-auth', protectAdmin, adminController.checkAuth);
     router.post(
         '/event-media/signed-url',
         protectAdmin,
