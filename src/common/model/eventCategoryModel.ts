@@ -72,7 +72,6 @@ const eventCategorySchema = new Schema<IEventCategoryDocument>(
 );
 
 // Create index for better query performance
-eventCategorySchema.index({ slug: 1 });
 eventCategorySchema.index({ isActive: 1 });
 eventCategorySchema.index({ createdBy: 1 });
 

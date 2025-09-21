@@ -48,6 +48,7 @@ class EventCategoryController {
     async getAllCategories(req: Req, res: Res) {
         const { 
             isActive, 
+            search,
             page = '1', 
             limit = '10' 
         } = req.query;
@@ -65,11 +66,16 @@ class EventCategoryController {
             options.isActive = isActive === 'true';
         }
 
+        if (search) {
+            options.search = search as string;
+        }
+
         const [categories, total] = await Promise.all([
             eventCategoryRepository.findAll(options),
-            eventCategoryRepository.count(
-                isActive !== undefined ? { isActive: isActive === 'true' } : undefined
-            )
+            eventCategoryRepository.count({
+                ...(isActive !== undefined && { isActive: isActive === 'true' }),
+                ...(search && { search: search as string })
+            })
         ]);
 
         res.json({

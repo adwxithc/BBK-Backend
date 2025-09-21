@@ -14,6 +14,7 @@ class EventCategoryRepository {
 
     async findAll(options?: {
         isActive?: boolean;
+        search?: string;
         limit?: number;
         skip?: number;
     }): Promise<IEventCategoryDocument[]> {
@@ -21,6 +22,13 @@ class EventCategoryRepository {
         
         if (options?.isActive !== undefined) {
             query.isActive = options.isActive;
+        }
+
+        if (options?.search) {
+            query.$or = [
+                { name: { $regex: options.search, $options: 'i' } },
+                { slug: { $regex: options.search, $options: 'i' } }
+            ];
         }
 
         let mongoQuery = EventCategory.find(query).sort({ createdAt: -1 });
@@ -76,11 +84,21 @@ class EventCategoryRepository {
         ).exec();
     }
 
-    async count(options?: { isActive?: boolean }): Promise<number> {
+    async count(options?: { 
+        isActive?: boolean;
+        search?: string;
+    }): Promise<number> {
         const query: any = {};
         
         if (options?.isActive !== undefined) {
             query.isActive = options.isActive;
+        }
+
+        if (options?.search) {
+            query.$or = [
+                { name: { $regex: options.search, $options: 'i' } },
+                { slug: { $regex: options.search, $options: 'i' } }
+            ];
         }
 
         return await EventCategory.countDocuments(query).exec();
