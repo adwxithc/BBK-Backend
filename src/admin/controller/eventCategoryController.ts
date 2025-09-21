@@ -27,6 +27,7 @@ class EventCategoryController {
         const category = await eventCategoryRepository.create(categoryData);
 
         res.status(201).json({
+            status: 201,
             success: true,
             data: {
                 category: {
@@ -72,6 +73,7 @@ class EventCategoryController {
         ]);
 
         res.json({
+            status: 200,
             success: true,
             data: {
                 categories: categories.map(category => ({
@@ -104,6 +106,7 @@ class EventCategoryController {
         }
 
         res.json({
+            status: 200,
             success: true,
             data: {
                 category: {
@@ -148,6 +151,7 @@ class EventCategoryController {
         const updatedCategory = await eventCategoryRepository.update(id, updateData);
 
         res.json({
+            status: 200,
             success: true,
             data: {
                 category: {
@@ -176,9 +180,10 @@ class EventCategoryController {
         const deletedCategory = await eventCategoryRepository.softDelete(id);
 
         res.json({
+            status: 200,
             success: true,
+            message: 'Category soft deleted successfully',
             data: {
-                message: 'Category soft deleted successfully',
                 category: {
                     _id: deletedCategory!._id,
                     name: deletedCategory!.name,
@@ -206,9 +211,10 @@ class EventCategoryController {
         const updatedCategory = await eventCategoryRepository.toggleActive(id, isActive);
 
         res.json({
+            status: 200,
             success: true,
+            message: `Category ${isActive ? 'activated' : 'deactivated'} successfully`,
             data: {
-                message: `Category ${isActive ? 'activated' : 'deactivated'} successfully`,
                 category: {
                     _id: updatedCategory!._id,
                     name: updatedCategory!.name,
