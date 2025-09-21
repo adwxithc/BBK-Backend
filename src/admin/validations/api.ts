@@ -105,4 +105,88 @@ export const createEventValidations = [
         .withMessage('Video size must be a number'),
 ];
 
+// Event Category Validations
+export const createEventCategoryValidations = [
+    body('name')
+        .notEmpty()
+        .withMessage('Category name is required')
+        .isString()
+        .withMessage('Category name must be a string')
+        .isLength({ max: 100 })
+        .withMessage('Category name must not exceed 100 characters')
+        .trim(),
+
+    body('description')
+        .notEmpty()
+        .withMessage('Category description is required')
+        .isString()
+        .withMessage('Category description must be a string')
+        .isLength({ max: 500 })
+        .withMessage('Category description must not exceed 500 characters')
+        .trim(),
+
+    body('slug')
+        .notEmpty()
+        .withMessage('Slug is required')
+        .isString()
+        .withMessage('Slug must be a string')
+        .isLength({ max: 100 })
+        .withMessage('Slug must not exceed 100 characters')
+        .matches(/^[a-z0-9-]+$/)
+        .withMessage('Slug must contain only lowercase letters, numbers, and hyphens')
+        .trim(),
+
+    body('color')
+        .notEmpty()
+        .withMessage('Color is required')
+        .isString()
+        .withMessage('Color must be a string')
+        .matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+        .withMessage('Color must be a valid hex color (e.g., #FF5733 or #F53)')
+        .trim(),
+];
+
+export const updateEventCategoryValidations = [
+    body('name')
+        .optional()
+        .isString()
+        .withMessage('Category name must be a string')
+        .isLength({ max: 100 })
+        .withMessage('Category name must not exceed 100 characters')
+        .trim(),
+
+    body('description')
+        .optional()
+        .isString()
+        .withMessage('Category description must be a string')
+        .isLength({ max: 500 })
+        .withMessage('Category description must not exceed 500 characters')
+        .trim(),
+
+    body('slug')
+        .optional()
+        .isString()
+        .withMessage('Slug must be a string')
+        .isLength({ max: 100 })
+        .withMessage('Slug must not exceed 100 characters')
+        .matches(/^[a-z0-9-]+$/)
+        .withMessage('Slug must contain only lowercase letters, numbers, and hyphens')
+        .trim(),
+
+    body('color')
+        .optional()
+        .isString()
+        .withMessage('Color must be a string')
+        .matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+        .withMessage('Color must be a valid hex color (e.g., #FF5733 or #F53)')
+        .trim(),
+];
+
+export const toggleActiveValidations = [
+    body('isActive')
+        .notEmpty()
+        .withMessage('isActive is required')
+        .isBoolean()
+        .withMessage('isActive must be a boolean value'),
+];
 
