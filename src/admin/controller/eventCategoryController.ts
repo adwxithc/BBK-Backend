@@ -132,7 +132,7 @@ class EventCategoryController {
 
     async updateCategory(req: Req, res: Res) {
         const { id } = req.params;
-        const { name, description, slug, color } = req.body;
+        const { name, description, slug, color, isActive } = req.body;
 
         // Check if category exists
         const existingCategory = await eventCategoryRepository.findById(id);
@@ -153,6 +153,7 @@ class EventCategoryController {
         if (description !== undefined) updateData.description = description;
         if (slug !== undefined) updateData.slug = slug.toLowerCase();
         if (color !== undefined) updateData.color = color;
+        if (isActive !== undefined) updateData.isActive = isActive;
 
         const updatedCategory = await eventCategoryRepository.update(id, updateData);
 

@@ -7,6 +7,7 @@ export interface IEventCategory {
   slug: string;                    // URL-friendly version: "annual-day"
   color: string;                   // Theme color for the category
   isActive: boolean;               // Whether category is active
+  isDeleted: boolean;              // Whether category is soft deleted
   createdBy: string;               // Admin ID who created
   createdAt: Date;
   updatedAt: Date;
@@ -18,6 +19,7 @@ export interface IEventCategoryDocument extends Document {
   slug: string;
   color: string;
   isActive: boolean;
+  isDeleted: boolean;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
@@ -61,6 +63,10 @@ const eventCategorySchema = new Schema<IEventCategoryDocument>(
       type: Boolean,
       default: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
     createdBy: {
       type: String,
       required: [true, 'Created by is required'],
@@ -73,6 +79,7 @@ const eventCategorySchema = new Schema<IEventCategoryDocument>(
 
 // Create index for better query performance
 eventCategorySchema.index({ isActive: 1 });
+eventCategorySchema.index({ isDeleted: 1 });
 eventCategorySchema.index({ createdBy: 1 });
 
 const EventCategory = mongoose.model<IEventCategoryDocument>('EventCategory', eventCategorySchema);
