@@ -5,15 +5,19 @@ import { BadRequestError } from '@common/errors/bad-request-error';
 class EventCategoryController {
     async createCategory(req: Req, res: Res) {
         const { name, description, slug, color } = req.body;
-        
+
         if (!req.user) {
             throw new BadRequestError('User not authenticated');
         }
 
         // Check if slug already exists
-        const existingCategory = await eventCategoryRepository.checkSlugExists(slug);
+        const existingCategory = await eventCategoryRepository.checkSlugExists(
+            slug
+        );
         if (existingCategory) {
-            throw new BadRequestError('A category with this slug already exists');
+            throw new BadRequestError(
+                'A category with this slug already exists'
+            );
         }
 
         const categoryData = {
@@ -40,18 +44,13 @@ class EventCategoryController {
                     createdBy: category.createdBy,
                     createdAt: category.createdAt,
                     updatedAt: category.updatedAt,
-                }
+                },
             },
         });
     }
 
     async getAllCategories(req: Req, res: Res) {
-        const { 
-            isActive, 
-            search,
-            page = '1', 
-            limit = '10' 
-        } = req.query;
+        const { isActive, search, page = '1', limit = '10' } = req.query;
 
         const pageNum = parseInt(page as string, 10);
         const limitNum = parseInt(limit as string, 10);
@@ -73,16 +72,18 @@ class EventCategoryController {
         const [categories, total] = await Promise.all([
             eventCategoryRepository.findAll(options),
             eventCategoryRepository.count({
-                ...(isActive !== undefined && { isActive: isActive === 'true' }),
-                ...(search && { search: search as string })
-            })
+                ...(isActive !== undefined && {
+                    isActive: isActive === 'true',
+                }),
+                ...(search && { search: search as string }),
+            }),
         ]);
 
         res.json({
             status: 200,
             success: true,
             data: {
-                categories: categories.map(category => ({
+                categories: categories.map((category) => ({
                     _id: category._id,
                     name: category.name,
                     description: category.description,
@@ -98,7 +99,7 @@ class EventCategoryController {
                     totalPages: Math.ceil(total / limitNum),
                     totalItems: total,
                     itemsPerPage: limitNum,
-                }
+                },
             },
         });
     }
@@ -125,7 +126,7 @@ class EventCategoryController {
                     createdBy: category.createdBy,
                     createdAt: category.createdAt,
                     updatedAt: category.updatedAt,
-                }
+                },
             },
         });
     }
@@ -142,9 +143,14 @@ class EventCategoryController {
 
         // If slug is being updated, check if it's already taken by another category
         if (slug && slug !== existingCategory.slug) {
-            const slugExists = await eventCategoryRepository.checkSlugExists(slug, id);
+            const slugExists = await eventCategoryRepository.checkSlugExists(
+                slug,
+                id
+            );
             if (slugExists) {
-                throw new BadRequestError('A category with this slug already exists');
+                throw new BadRequestError(
+                    'A category with this slug already exists'
+                );
             }
         }
 
@@ -155,7 +161,10 @@ class EventCategoryController {
         if (color !== undefined) updateData.color = color;
         if (isActive !== undefined) updateData.isActive = isActive;
 
-        const updatedCategory = await eventCategoryRepository.update(id, updateData);
+        const updatedCategory = await eventCategoryRepository.update(
+            id,
+            updateData
+        );
 
         res.json({
             status: 200,
@@ -171,7 +180,7 @@ class EventCategoryController {
                     createdBy: updatedCategory!.createdBy,
                     createdAt: updatedCategory!.createdAt,
                     updatedAt: updatedCategory!.updatedAt,
-                }
+                },
             },
         });
     }
@@ -179,29 +188,27 @@ class EventCategoryController {
     async softDeleteCategory(req: Req, res: Res) {
         const { id } = req.params;
 
-        const category = await eventCategoryRepository.findById(id);
-        if (!category) {
-            throw new BadRequestError('Category not found');
-        }
-
         const deletedCategory = await eventCategoryRepository.softDelete(id);
 
+        if (!deletedCategory) {
+            throw new BadRequestError('Category not found');
+        }
         res.json({
             status: 200,
             success: true,
             message: 'Category soft deleted successfully',
             data: {
                 category: {
-                    _id: deletedCategory!._id,
-                    name: deletedCategory!.name,
-                    description: deletedCategory!.description,
-                    slug: deletedCategory!.slug,
-                    color: deletedCategory!.color,
-                    isActive: deletedCategory!.isActive,
-                    createdBy: deletedCategory!.createdBy,
-                    createdAt: deletedCategory!.createdAt,
-                    updatedAt: deletedCategory!.updatedAt,
-                }
+                    _id: deletedCategory._id,
+                    name: deletedCategory.name,
+                    description: deletedCategory.description,
+                    slug: deletedCategory.slug,
+                    color: deletedCategory.color,
+                    isActive: deletedCategory.isActive,
+                    createdBy: deletedCategory.createdBy,
+                    createdAt: deletedCategory.createdAt,
+                    updatedAt: deletedCategory.updatedAt,
+                },
             },
         });
     }
@@ -215,12 +222,17 @@ class EventCategoryController {
             throw new BadRequestError('Category not found');
         }
 
-        const updatedCategory = await eventCategoryRepository.toggleActive(id, isActive);
+        const updatedCategory = await eventCategoryRepository.toggleActive(
+            id,
+            isActive
+        );
 
         res.json({
             status: 200,
             success: true,
-            message: `Category ${isActive ? 'activated' : 'deactivated'} successfully`,
+            message: `Category ${
+                isActive ? 'activated' : 'deactivated'
+            } successfully`,
             data: {
                 category: {
                     _id: updatedCategory!._id,
@@ -232,7 +244,7 @@ class EventCategoryController {
                     createdBy: updatedCategory!.createdBy,
                     createdAt: updatedCategory!.createdAt,
                     updatedAt: updatedCategory!.updatedAt,
-                }
+                },
             },
         });
     }
