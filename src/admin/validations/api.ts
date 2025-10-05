@@ -196,6 +196,14 @@ export const getEventCategoriesValidations = [
         .isBoolean()
         .withMessage('isActive must be a boolean value (true or false)'),
 
+    query('search')
+        .optional()
+        .isString()
+        .withMessage('Search must be a string')
+        .isLength({ min: 1, max: 100 })
+        .withMessage('Search must be between 1 and 100 characters')
+        .trim(),
+
     query('page')
         .optional()
         .isInt({ min: 1 })

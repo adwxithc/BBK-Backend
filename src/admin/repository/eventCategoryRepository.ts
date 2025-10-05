@@ -14,13 +14,21 @@ class EventCategoryRepository {
 
     async findAll(options?: {
         isActive?: boolean;
+        search?: string;
         limit?: number;
         skip?: number;
     }): Promise<IEventCategoryDocument[]> {
-        const query: any = {};
+        const query: any = { isDeleted: false };
         
         if (options?.isActive !== undefined) {
             query.isActive = options.isActive;
+        }
+
+        if (options?.search) {
+            query.$or = [
+                { name: { $regex: options.search, $options: 'i' } },
+                { slug: { $regex: options.search, $options: 'i' } }
+            ];
         }
 
         let mongoQuery = EventCategory.find(query).sort({ createdAt: -1 });
@@ -37,11 +45,11 @@ class EventCategoryRepository {
     }
 
     async findById(id: string): Promise<IEventCategoryDocument | null> {
-        return await EventCategory.findById(id).exec();
+        return await EventCategory.findOne({ _id: id, isDeleted: false }).exec();
     }
 
     async findBySlug(slug: string): Promise<IEventCategoryDocument | null> {
-        return await EventCategory.findOne({ slug }).exec();
+        return await EventCategory.findOne({ slug, isDeleted: false }).exec();
     }
 
     async update(
@@ -63,7 +71,7 @@ class EventCategoryRepository {
     async softDelete(id: string): Promise<IEventCategoryDocument | null> {
         return await EventCategory.findByIdAndUpdate(
             id,
-            { isActive: false, updatedAt: new Date() },
+            { isDeleted: true, updatedAt: new Date() },
             { new: true }
         ).exec();
     }
@@ -76,18 +84,28 @@ class EventCategoryRepository {
         ).exec();
     }
 
-    async count(options?: { isActive?: boolean }): Promise<number> {
-        const query: any = {};
+    async count(options?: { 
+        isActive?: boolean;
+        search?: string;
+    }): Promise<number> {
+        const query: any = { isDeleted: false };
         
         if (options?.isActive !== undefined) {
             query.isActive = options.isActive;
+        }
+
+        if (options?.search) {
+            query.$or = [
+                { name: { $regex: options.search, $options: 'i' } },
+                { slug: { $regex: options.search, $options: 'i' } }
+            ];
         }
 
         return await EventCategory.countDocuments(query).exec();
     }
 
     async checkSlugExists(slug: string, excludeId?: string): Promise<boolean> {
-        const query: any = { slug };
+        const query: any = { slug, isDeleted: false };
         
         if (excludeId) {
             query._id = { $ne: excludeId };
