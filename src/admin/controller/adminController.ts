@@ -58,7 +58,7 @@ class AdminController {
     }
 
     async getSignedUrl(req: Req, res: Res) {
-        const { title, description, photos = [], videos = [] } = req.body;
+        const { title, photos = [], videos = [] } = req.body;
 
         //Handle photos
         const photoResults = await Promise.all(
@@ -115,7 +115,6 @@ class AdminController {
             message: 'Presigned URLs generated successfully',
             data: {
                 title,
-                description,
                 photos: photoResults,
                 videos: videoResults,
             },

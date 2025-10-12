@@ -9,7 +9,6 @@ import {
     loginValidations,
     createEventCategoryValidations,
     updateEventCategoryValidations,
-    toggleActiveValidations,
     getEventCategoriesValidations,
 } from '../validations/api';
 import protectAdmin from '@common/middlewares/protect';
@@ -58,12 +57,6 @@ export function adminRouter(router: Router) {
         asyncHandler(eventCategoryController.getAllCategories)
     );
 
-    // Get a single event category by ID
-    router.get(
-        '/event-category/:id',
-        protectAdmin,
-        asyncHandler(eventCategoryController.getCategoryById)
-    );
 
     // Update an event category
     router.put(
@@ -81,14 +74,6 @@ export function adminRouter(router: Router) {
         asyncHandler(eventCategoryController.softDeleteCategory)
     );
 
-    // Toggle active status of an event category
-    router.patch(
-        '/event-category/:id/toggle-active',
-        protectAdmin,
-        toggleActiveValidations,
-        validateRequest,
-        asyncHandler(eventCategoryController.toggleActiveStatus)
-    );
 
     return router;
 }

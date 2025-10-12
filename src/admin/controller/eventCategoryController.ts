@@ -104,32 +104,6 @@ class EventCategoryController {
         });
     }
 
-    async getCategoryById(req: Req, res: Res) {
-        const { id } = req.params;
-
-        const category = await eventCategoryRepository.findById(id);
-        if (!category) {
-            throw new BadRequestError('Category not found');
-        }
-
-        res.json({
-            status: 200,
-            success: true,
-            data: {
-                category: {
-                    _id: category._id,
-                    name: category.name,
-                    description: category.description,
-                    slug: category.slug,
-                    color: category.color,
-                    isActive: category.isActive,
-                    createdBy: category.createdBy,
-                    createdAt: category.createdAt,
-                    updatedAt: category.updatedAt,
-                },
-            },
-        });
-    }
 
     async updateCategory(req: Req, res: Res) {
         const { id } = req.params;
@@ -213,41 +187,6 @@ class EventCategoryController {
         });
     }
 
-    async toggleActiveStatus(req: Req, res: Res) {
-        const { id } = req.params;
-        const { isActive } = req.body;
-
-        const category = await eventCategoryRepository.findById(id);
-        if (!category) {
-            throw new BadRequestError('Category not found');
-        }
-
-        const updatedCategory = await eventCategoryRepository.toggleActive(
-            id,
-            isActive
-        );
-
-        res.json({
-            status: 200,
-            success: true,
-            message: `Category ${
-                isActive ? 'activated' : 'deactivated'
-            } successfully`,
-            data: {
-                category: {
-                    _id: updatedCategory!._id,
-                    name: updatedCategory!.name,
-                    description: updatedCategory!.description,
-                    slug: updatedCategory!.slug,
-                    color: updatedCategory!.color,
-                    isActive: updatedCategory!.isActive,
-                    createdBy: updatedCategory!.createdBy,
-                    createdAt: updatedCategory!.createdAt,
-                    updatedAt: updatedCategory!.updatedAt,
-                },
-            },
-        });
-    }
 }
 
 export default new EventCategoryController();

@@ -15,14 +15,6 @@ export const createMediaSignedUrlValidations = [
         .isLength({ max: 100 })
         .withMessage('Title must not exceed 100 characters'),
 
-    body('description')
-        .notEmpty()
-        .withMessage('Description is required')
-        .isString()
-        .withMessage('Description must be a string')
-        .isLength({ max: 1000 })
-        .withMessage('Description must not exceed 1000 characters'),
-
     body('photos')
         .optional()
         .isArray({ max: 50 })
@@ -133,7 +125,9 @@ export const createEventCategoryValidations = [
         .isLength({ max: 100 })
         .withMessage('Slug must not exceed 100 characters')
         .matches(/^[a-z0-9-]+$/)
-        .withMessage('Slug must contain only lowercase letters, numbers, and hyphens')
+        .withMessage(
+            'Slug must contain only lowercase letters, numbers, and hyphens'
+        )
         .trim(),
 
     body('color')
@@ -170,7 +164,9 @@ export const updateEventCategoryValidations = [
         .isLength({ max: 100 })
         .withMessage('Slug must not exceed 100 characters')
         .matches(/^[a-z0-9-]+$/)
-        .withMessage('Slug must contain only lowercase letters, numbers, and hyphens')
+        .withMessage(
+            'Slug must contain only lowercase letters, numbers, and hyphens'
+        )
         .trim(),
 
     body('color')
@@ -180,14 +176,6 @@ export const updateEventCategoryValidations = [
         .matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
         .withMessage('Color must be a valid hex color (e.g., #FF5733 or #F53)')
         .trim(),
-];
-
-export const toggleActiveValidations = [
-    body('isActive')
-        .notEmpty()
-        .withMessage('isActive is required')
-        .isBoolean()
-        .withMessage('isActive must be a boolean value'),
 ];
 
 export const getEventCategoriesValidations = [
