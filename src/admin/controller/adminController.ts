@@ -48,7 +48,7 @@ class AdminController {
         if (!req.user) {
             throw new BadRequestError('User not authenticated');
         }
-        
+
         const { email, name } = req.user;
 
         res.json({
@@ -58,28 +58,14 @@ class AdminController {
     }
 
     async getSignedUrl(req: Req, res: Res) {
-        const { title, photos = [], videos = [] } = req.body;
-
-        //Handle photos
-        const photoResults = await Promise.all(
-            photos.map(async (photo: MediaFile) => {
-                const { contentType } = photo;
-                const uniqueId = uniqueString.generateUniqueString();
-                const key = `media/photos/${title}-${uniqueId}`;
-                const { url } = await mediaUpload.getPresignedUrl(
-                    key,
-                    contentType
-                );
-                return { key, url };
-            })
-        );
+        const { title, mediaFiles = [] } = req.body;
         const threshold = parseInt(process.env.MULTIPART_THRESHOLD_MB || '15');
-        //Handle videos
-        const videoResults = await Promise.all(
-            videos.map(async (video: MediaFile) => {
-                const { contentType, size = 0 } = video;
+      
+        const fileResults = await Promise.all(
+            mediaFiles.map(async (file: MediaFile) => {
+                const { contentType, size = 0, type } = file;
                 const uniqueId = uniqueString.generateUniqueString();
-                const key = `media/videos/${title}-${uniqueId}`;
+                const key = `media/${type}/${title}-${uniqueId}`;
 
                 if (size > threshold) {
                     const parts = Math.ceil(size / 5); // approx 5MB per part
@@ -95,6 +81,7 @@ class AdminController {
                         uploadId: multipartResult.uploadId,
                         parts: multipartResult.urls,
                         multipart: true,
+                        type
                     };
                 } else {
                     const { url } = await mediaUpload.getPresignedUrl(
@@ -105,19 +92,56 @@ class AdminController {
                         key,
                         url,
                         multipart: false,
+                        type
                     };
                 }
             })
         );
-
+        const photos = fileResults.filter((file) => file.type === 'photos');
+        const videos = fileResults.filter((file) => file.type === 'videos');
         res.status(200).json({
             success: true,
             message: 'Presigned URLs generated successfully',
             data: {
                 title,
-                photos: photoResults,
-                videos: videoResults,
+                files: fileResults,
+                photos,
+                videos,
             },
+        });
+    }
+
+    async completeMultipartUploadBatch(req: Req, res: Res) {
+        const { uploads } = req.body;
+        if (!uploads || !Array.isArray(uploads) || uploads.length === 0) {
+            throw new BadRequestError('No uploads provided');
+        }
+        const results = await Promise.all(
+            uploads.map(async (upload: any) => {
+                const { key, uploadId, parts } = upload;
+                return mediaUpload.completeMultipartUpload(
+                    key,
+                    uploadId,
+                    parts
+                );
+            })
+        );
+        res.status(200).json({
+            success: true,
+            message: 'All uploads completed successfully',
+            data: results,
+        });
+    }
+
+    async abortMultipartUpload(req: Req, res: Res) {
+        const { key, uploadId } = req.body;
+        if (!key || !uploadId) {
+            throw new BadRequestError('Key and Upload ID are required');
+        }
+        await mediaUpload.abortMultipartUpload(key, uploadId);
+        res.status(200).json({
+            success: true,
+            message: 'Multipart upload aborted successfully',
         });
     }
 

@@ -59,5 +59,6 @@ export interface IEvent {
 
 export interface MediaFile {
     contentType: string;
+    type: 'photo' | 'video'
     size?: number;
 }

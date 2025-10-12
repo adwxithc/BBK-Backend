@@ -15,37 +15,74 @@ export const createMediaSignedUrlValidations = [
         .isLength({ max: 100 })
         .withMessage('Title must not exceed 100 characters'),
 
-    body('photos')
-        .optional()
-        .isArray({ max: 50 })
-        .withMessage('Photos must be an array with up to 50 items'),
-
-    body('photos.*.contentType')
-        .if(body('photos').exists())
+    body('mediaFiles')
         .notEmpty()
-        .withMessage('Photo contentType is required for each photo')
+        .withMessage('Media files are required')
+        .isArray({ min: 1, max: 50 })
+        .withMessage('Media files must be an array with 1 to 50 items'),
+    body('mediaFiles.*.contentType')
+        .notEmpty()
+        .withMessage('Media contentType is required for each file')
         .isString()
-        .withMessage('Photo contentType must be a string'),
-
-    body('videos')
+        .withMessage('Media contentType must be a string'),
+    // Validate 'type' field if provided
+    body('mediaFiles.*.type')
+        .notEmpty()
+        .withMessage('Media type is required for each file')
+        .isIn(['photo', 'video'])
+        .withMessage("Media type must be either 'photo' or 'video'"),
+    body('mediaFiles.*.size')
         .optional()
-        .isArray({ max: 10 })
-        .withMessage('Videos must be an array with up to 10 items'),
-
-    body('videos.*.contentType')
-        .if(body('videos').exists())
-        .notEmpty()
-        .withMessage('Video contentType is required for each video')
-        .isString()
-        .withMessage('Video contentType must be a string'),
-    body('videos.*.size')
-        .if(body('videos').exists())
-        .notEmpty()
-        .withMessage('Video size is required for each video')
         .isNumeric()
-        .withMessage('Video size must be a number (in MB)')
+        .withMessage('Media size must be a number (in MB)')
         .custom((size) => size > 0 && size <= 1024)
-        .withMessage('Video size must be between 1MB and 1024MB (1GB)'),
+        .withMessage('Media size must be between 1MB and 1024MB (1GB)'),
+];
+
+export const completeMultipartUploadBatchValidations = [
+    body('uploads')
+        .notEmpty()
+        .withMessage('Uploads are required')
+        .isArray()
+        .withMessage('Uploads must be an array'),
+    body('uploads.*.key')
+        .notEmpty()
+        .withMessage('Upload key is required')
+        .isString()
+        .withMessage('Upload key must be a string'),
+    body('uploads.*.uploadId')
+        .notEmpty()
+        .withMessage('Upload ID is required')
+        .isString()
+        .withMessage('Upload ID must be a string'),
+    body('uploads.*.parts')
+        .notEmpty()
+        .withMessage('Upload parts are required')
+        .isArray()
+        .withMessage('Upload parts must be an array'),
+    body('uploads.*.parts.*.ETag')
+        .notEmpty()
+        .withMessage('Part ETag is required')
+        .isString()
+        .withMessage('Part ETag must be a string'),
+    body('uploads.*.parts.*.PartNumber')
+        .notEmpty()
+        .withMessage('Part Number is required')
+        .isNumeric()
+        .withMessage('Part Number must be a number'),
+];
+
+export const abortMultipartUploadValidations = [
+    body('key')
+        .notEmpty()
+        .withMessage('Key is required')
+        .isString()
+        .withMessage('Key must be a string'),
+    body('uploadId')
+        .notEmpty()
+        .withMessage('Upload ID is required')
+        .isString()
+        .withMessage('Upload ID must be a string'),
 ];
 
 export const createEventValidations = [
@@ -63,38 +100,53 @@ export const createEventValidations = [
         .withMessage('Description must be a string')
         .isLength({ max: 1000 })
         .withMessage('Description must not exceed 1000 characters'),
-    body('photos').optional().isArray().withMessage('Photos must be an array'),
-    body('photos.*.key')
+    body('categoryId').notEmpty().withMessage('Category ID is required'),
+    body('date')
         .notEmpty()
-        .withMessage('Photo key is required')
+        .withMessage('Date is required')
+        .isISO8601()
+        .withMessage('Date must be a valid ISO 8601 date'),
+    body('endDate')
+        .optional()
+        .isISO8601()
+        .withMessage('End Date must be a valid ISO 8601 date')
+        .custom((endDate, { req }) => {
+            if (new Date(endDate) < new Date(req.body.date)) {
+                throw new Error('End Date cannot be before Start Date');
+            }
+            return true;
+        }),
+    body('time')
+        .notEmpty()
+        .withMessage('Time is required')
         .isString()
-        .withMessage('Photo key must be a string'),
-    body('photos.*.contentType')
+        .withMessage('Time must be a string'),
+    body('location')
         .notEmpty()
-        .withMessage('Photo contentType is required')
+        .withMessage('Location is required')
         .isString()
-        .withMessage('Photo contentType must be a string'),
-    body('photos.*.size')
-        .notEmpty()
-        .withMessage('Photo size is required')
-        .isNumeric()
-        .withMessage('Photo size must be a number'),
-    body('videos').optional().isArray().withMessage('Videos must be an array'),
-    body('videos.*.key')
-        .notEmpty()
-        .withMessage('Video key is required')
+        .withMessage('Location must be a string')
+        .isLength({ max: 200 })
+        .withMessage('Location must not exceed 200 characters'),
+    body('coverImage')
+        .optional()
         .isString()
-        .withMessage('Video key must be a string'),
-    body('videos.*.contentType')
+        .withMessage('Cover Image must be a string (key)'),
+    body('gallery')
+        .optional()
+        .isArray()
+        .withMessage('Gallery must be an array'),
+    body('status')
         .notEmpty()
-        .withMessage('Video contentType is required')
+        .withMessage('Status is required')
         .isString()
-        .withMessage('Video contentType must be a string'),
-    body('videos.*.size')
-        .notEmpty()
-        .withMessage('Video size is required')
-        .isNumeric()
-        .withMessage('Video size must be a number'),
+        .withMessage('Status must be a string')
+        .isIn(['draft', 'published', 'archived'])
+        .withMessage('Status must be one of the following: draft, published, archived'),
+    body('featured')
+        .optional()
+        .isBoolean()
+        .withMessage('Featured must be a boolean value')
 ];
 
 // Event Category Validations
