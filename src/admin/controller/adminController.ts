@@ -59,8 +59,11 @@ class AdminController {
 
     async getSignedUrl(req: Req, res: Res) {
         const { title, mediaFiles = [] } = req.body;
-        const threshold = parseInt(process.env.MULTIPART_THRESHOLD_MB || '15');
-      
+        const thresholdMB = parseInt(
+            process.env.MULTIPART_THRESHOLD_MB || '15'
+        );
+        const threshold = thresholdMB * 1024 * 1024;
+
         const fileResults = await Promise.all(
             mediaFiles.map(async (file: MediaFile) => {
                 const { contentType, size = 0, type } = file;
@@ -68,7 +71,9 @@ class AdminController {
                 const key = `media/${type}/${title}-${uniqueId}`;
 
                 if (size > threshold) {
-                    const parts = Math.ceil(size / 5); // approx 5MB per part
+                    const partSizeMB = process.env.MULTIPART_PART_SIZE_MB || '5';
+                    const partSize = parseInt(partSizeMB) * 1024 * 1024;
+                    const parts = Math.ceil(size / partSize);
                     const multipartResult =
                         await mediaUpload.getMultipartPresignedUrls(
                             key,
@@ -81,7 +86,7 @@ class AdminController {
                         uploadId: multipartResult.uploadId,
                         parts: multipartResult.urls,
                         multipart: true,
-                        type
+                        type,
                     };
                 } else {
                     const { url } = await mediaUpload.getPresignedUrl(
@@ -92,20 +97,20 @@ class AdminController {
                         key,
                         url,
                         multipart: false,
-                        type
+                        type,
                     };
                 }
             })
         );
-        const photos = fileResults.filter((file) => file.type === 'photos');
-        const videos = fileResults.filter((file) => file.type === 'videos');
+        const images = fileResults.filter((file) => file.type === 'image');
+        const videos = fileResults.filter((file) => file.type === 'video');
         res.status(200).json({
             success: true,
             message: 'Presigned URLs generated successfully',
             data: {
                 title,
                 files: fileResults,
-                photos,
+                images,
                 videos,
             },
         });
@@ -146,8 +151,8 @@ class AdminController {
     }
 
     async createEvent(req: Req, res: Res) {
-        const { title, description, photos = [], videos = [] } = req.body;
-        const event = { title, description, photos, videos };
+        const { title, description, images = [], videos = [] } = req.body;
+        const event = { title, description, images, videos };
         const newEvent = await eventRepository.createEvent(event);
         res.status(201).json({
             success: true,

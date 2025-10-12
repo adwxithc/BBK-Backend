@@ -29,14 +29,21 @@ export const createMediaSignedUrlValidations = [
     body('mediaFiles.*.type')
         .notEmpty()
         .withMessage('Media type is required for each file')
-        .isIn(['photo', 'video'])
-        .withMessage("Media type must be either 'photo' or 'video'"),
+        .isIn(['image', 'video'])
+        .withMessage("Media type must be either 'image' or 'video'"),
     body('mediaFiles.*.size')
         .optional()
         .isNumeric()
-        .withMessage('Media size must be a number (in MB)')
-        .custom((size) => size > 0 && size <= 1024)
-        .withMessage('Media size must be between 1MB and 1024MB (1GB)'),
+        .withMessage('Size must be a number (in bytes)')
+        .custom((size) => {
+            const sizeInBytes = parseInt(size);
+            const maxSize = 1024 * 1024 * 1024; // 1GB in bytes
+            const minSize = 1; // 1 byte minimum
+            return sizeInBytes >= minSize && sizeInBytes <= maxSize;
+        })
+        .withMessage(
+            'Size must be between 1 byte and 1GB (1,073,741,824 bytes)'
+        ),
 ];
 
 export const completeMultipartUploadBatchValidations = [
@@ -142,11 +149,13 @@ export const createEventValidations = [
         .isString()
         .withMessage('Status must be a string')
         .isIn(['draft', 'published', 'archived'])
-        .withMessage('Status must be one of the following: draft, published, archived'),
+        .withMessage(
+            'Status must be one of the following: draft, published, archived'
+        ),
     body('featured')
         .optional()
         .isBoolean()
-        .withMessage('Featured must be a boolean value')
+        .withMessage('Featured must be a boolean value'),
 ];
 
 // Event Category Validations

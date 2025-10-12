@@ -45,7 +45,7 @@ export interface IEvent {
     
     // Media
     coverImage?: string;             // Main event poster/image URL
-    gallery: IEventMediaItem[];      // Event photos and videos
+    gallery: IEventMediaItem[];      // Event images and videos
     
     // Status
     status: 'draft' | 'published' | 'completed' | 'cancelled';
@@ -59,6 +59,6 @@ export interface IEvent {
 
 export interface MediaFile {
     contentType: string;
-    type: 'photo' | 'video'
+    type: 'image' | 'video';
     size?: number;
 }
