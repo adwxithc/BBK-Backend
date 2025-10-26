@@ -175,7 +175,30 @@ export const createEventValidations = [
         .optional()
         .isBoolean()
         .withMessage('Featured must be a boolean value'),
-    body('medias').optional().isArray().withMessage('Medias must be an array'),
+    body('medias')
+        .optional()
+        .isArray()
+        .withMessage('Medias must be an array')
+        .custom((medias) => {
+            for (const media of medias) {
+                if (media.multipart === true) {
+                    if (!media.uploadId || typeof media.uploadId !== 'string') {
+                        throw new Error(
+                            'Media uploadId is required and must be a string when multipart is true'
+                        );
+                    }
+                    if (
+                        !Array.isArray(media.parts) ||
+                        media.parts.length === 0
+                    ) {
+                        throw new Error(
+                            'Media parts is required and must be a non-empty array when multipart is true'
+                        );
+                    }
+                }
+            }
+            return true;
+        }),
     body('medias.*.key')
         .notEmpty()
         .withMessage('Media key is required')

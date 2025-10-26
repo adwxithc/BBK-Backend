@@ -176,7 +176,7 @@ class AdminController {
             .filter((m: any) => m.multipart)
             .map(async (media: any) => {
                 return {
-                    key: mediaUpload.completeMultipartUpload(
+                    key:await mediaUpload.completeMultipartUpload(
                         media.key,
                         media.uploadId,
                         media.parts
