@@ -168,6 +168,10 @@ class AdminController {
             featured,
             slug,
         } = req.body;
+        const existingEvent = await eventRepository.findBySlug(slug);
+        if (existingEvent) {
+            throw new BadRequestError('Event with this slug already exists');
+        }
         const completeMultipartUploadPromise = medias
             .filter((m: any) => m.multipart)
             .map(async (media: any) => {
