@@ -18,13 +18,11 @@ export interface IMediaData {
 
 export interface IEventMediaItem {
     _id?: string;
-    url: string;                     // Media URL (image or video)
-    contentType: 'image' | 'video';         // Media type
-    caption?: string;                // Optional media caption
-    altText?: string;                // Accessibility text (mainly for images)
-    duration?: number;               // Video duration in seconds
-    featured: boolean;               // Whether media is featured
-    uploadedAt: Date;
+    featured: boolean;
+    caption: string;
+    type: 'image' | 'video';
+    contentType: string;
+    key: string;
 }
 
 export interface IEvent {
@@ -45,20 +43,21 @@ export interface IEvent {
     
     // Media
     coverImage?: string;             // Main event poster/image URL
-    gallery: IEventMediaItem[];      // Event images and videos
+    medias: IEventMediaItem[];      // Event images and videos
     
     // Status
-    status: 'draft' | 'published' | 'completed' | 'cancelled';
+    status: 'draft' | 'published' | 'archived';
     featured: boolean;               // Whether to feature on homepage
     
     // Metadata
     createdBy: string;               // Admin ID
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export interface MediaFile {
     contentType: string;
     type: 'image' | 'video';
     size?: number;
+    id: string;
 }

@@ -44,6 +44,13 @@ export const createMediaSignedUrlValidations = [
         .withMessage(
             'Size must be between 1 byte and 1GB (1,073,741,824 bytes)'
         ),
+    body('mediaFiles.*.id')
+        .notEmpty()
+        .withMessage('Media ID is required for each file')
+        .isString()
+        .withMessage('Media ID must be a string')
+        .isLength({ max: 100 })
+        .withMessage('Media ID must not exceed 100 characters'),
 ];
 
 export const completeMultipartUploadBatchValidations = [
@@ -105,9 +112,25 @@ export const createEventValidations = [
         .withMessage('Description is required')
         .isString()
         .withMessage('Description must be a string')
-        .isLength({ max: 1000 })
-        .withMessage('Description must not exceed 1000 characters'),
-    body('categoryId').notEmpty().withMessage('Category ID is required'),
+        .isLength({ max: 5000 })
+        .withMessage('Description must not exceed 5000 characters'),
+    body('categoryId')
+        .notEmpty()
+        .withMessage('Category ID is required')
+        .isMongoId()
+        .withMessage('Category ID must be a valid MongoDB ObjectId'),
+    body('slug')
+        .notEmpty()
+        .withMessage('Slug is required')
+        .isString()
+        .withMessage('Slug must be a string')
+        .isLength({ max: 100 })
+        .withMessage('Slug must not exceed 100 characters')
+        .matches(/^[a-z0-9-]+$/)
+        .withMessage(
+            'Slug must contain only lowercase letters, numbers, and hyphens'
+        )
+        .trim(),
     body('date')
         .notEmpty()
         .withMessage('Date is required')
@@ -139,10 +162,6 @@ export const createEventValidations = [
         .optional()
         .isString()
         .withMessage('Cover Image must be a string (key)'),
-    body('gallery')
-        .optional()
-        .isArray()
-        .withMessage('Gallery must be an array'),
     body('status')
         .notEmpty()
         .withMessage('Status is required')
@@ -156,6 +175,56 @@ export const createEventValidations = [
         .optional()
         .isBoolean()
         .withMessage('Featured must be a boolean value'),
+    body('medias').optional().isArray().withMessage('Medias must be an array'),
+    body('medias.*.key')
+        .notEmpty()
+        .withMessage('Media key is required')
+        .isString()
+        .withMessage('Media key must be a string')
+        .isLength({ max: 200 })
+        .withMessage('Media key must not exceed 200 characters'),
+    body('medias.*.type')
+        .notEmpty()
+        .withMessage('Media type is required')
+        .isIn(['image', 'video'])
+        .withMessage('Media type must be either "image" or "video"'),
+    body('medias.*.contentType')
+        .notEmpty()
+        .withMessage('Media contentType is required for each file')
+        .isString()
+        .withMessage('Media contentType must be a string')
+        .matches(/^(image|video|audio|application)\/[a-zA-Z0-9.+-]+$/)
+        .withMessage('Media contentType must be a valid MIME type'),
+    body('medias.*.caption')
+        .optional()
+        .isString()
+        .withMessage('Media caption must be a string')
+        .isLength({ max: 200 })
+        .withMessage('Media caption must not exceed 200 characters'),
+    body('medias.*.featured')
+        .optional()
+        .isBoolean()
+        .withMessage('Media featured must be a boolean'),
+    body('medias.*.multipart')
+        .optional()
+        .isBoolean()
+        .withMessage('Media multipart must be a boolean'),
+    body('medias.*.uploadId')
+        .optional()
+        .isString()
+        .withMessage('Media uploadId must be a string'),
+    body('medias.*.parts')
+        .optional()
+        .isArray()
+        .withMessage('Media parts must be an array'),
+    body('medias.*.parts.*.ETag')
+        .optional()
+        .isString()
+        .withMessage('Part ETag must be a string'),
+    body('medias.*.parts.*.PartNumber')
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage('Part Number must be a positive integer'),
 ];
 
 // Event Category Validations

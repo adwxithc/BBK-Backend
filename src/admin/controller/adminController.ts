@@ -6,7 +6,7 @@ import adminRepository from '../repository/adminRepository';
 import { BadRequestError } from '@common/errors/bad-request-error';
 import { mediaUpload } from '@common/services/mediaUpload';
 import { uniqueString } from '@common/services/uniqueString';
-import { MediaFile } from '@common/types/data';
+import { IEvent, MediaFile } from '@common/types/data';
 import eventRepository from 'admin/repository/eventRepository';
 
 class AdminController {
@@ -71,7 +71,8 @@ class AdminController {
                 const key = `media/${type}/${title}-${uniqueId}`;
 
                 if (size > threshold) {
-                    const partSizeMB = process.env.MULTIPART_PART_SIZE_MB || '5';
+                    const partSizeMB =
+                        process.env.MULTIPART_PART_SIZE_MB || '5';
                     const partSize = parseInt(partSizeMB) * 1024 * 1024;
                     const parts = Math.ceil(size / partSize);
                     const multipartResult =
@@ -87,6 +88,7 @@ class AdminController {
                         parts: multipartResult.urls,
                         multipart: true,
                         type,
+                        id: file.id,
                     };
                 } else {
                     const { url } = await mediaUpload.getPresignedUrl(
@@ -98,6 +100,7 @@ class AdminController {
                         url,
                         multipart: false,
                         type,
+                        id: file.id,
                     };
                 }
             })
@@ -151,8 +154,75 @@ class AdminController {
     }
 
     async createEvent(req: Req, res: Res) {
-        const { title, description, images = [], videos = [] } = req.body;
-        const event = { title, description, images, videos };
+        const {
+            title,
+            description,
+            categoryId,
+            date,
+            endDate,
+            time,
+            location,
+            coverImage,
+            medias,
+            status,
+            featured,
+            slug,
+        } = req.body;
+        const completeMultipartUploadPromise = medias
+            .filter((m: any) => m.multipart)
+            .map(async (media: any) => {
+                return {
+                    key: mediaUpload.completeMultipartUpload(
+                        media.key,
+                        media.uploadId,
+                        media.parts
+                    ),
+                    uploadId: media.uploadId,
+                };
+            });
+
+        let multipartMediaKey: { key: string; uploadId: string }[] = [];
+        if (completeMultipartUploadPromise.length > 0) {
+            multipartMediaKey = await Promise.all(
+                completeMultipartUploadPromise
+            );
+        }
+        const storableMediaInfo = medias.map((media: any) => {
+            if (media.multipart) {
+                const completedMedia = multipartMediaKey.find(
+                    (m: any) => m.uploadId === media.uploadId
+                );
+                return {
+                    featured: media.featured,
+                    caption: media.caption,
+                    type: media.type,
+                    contentType: media.contentType,
+                    key: completedMedia?.key,
+                };
+            }
+            return {
+                featured: media.featured,
+                caption: media.caption,
+                type: media.type,
+                contentType: media.contentType,
+                key: media.key,
+            };
+        });
+        const event: IEvent = {
+            title,
+            description,
+            categoryId,
+            date,
+            endDate,
+            time,
+            location,
+            coverImage,
+            medias: storableMediaInfo,
+            status,
+            featured,
+            slug,
+            createdBy: req.user?.email as string,
+        };
         const newEvent = await eventRepository.createEvent(event);
         res.status(201).json({
             success: true,

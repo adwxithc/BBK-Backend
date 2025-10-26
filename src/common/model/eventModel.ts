@@ -2,31 +2,25 @@ import mongoose, { Schema } from 'mongoose';
 import { IEvent, IEventMediaItem } from '../types/data';
 
 const eventMediaItemSchema = new Schema<IEventMediaItem>({
-    url: {
-        type: String,
-        required: true,
-    },
-    contentType: {
-        type: String,
-        enum: ['image', 'video'],
-        required: true,
-    },
-    caption: {
-        type: String,
-    },
-    altText: {
-        type: String,
-    },
-    duration: {
-        type: Number,
-    },
     featured: {
         type: Boolean,
         default: false,
     },
-    uploadedAt: {
-        type: Date,
-        default: Date.now,
+    caption: {
+        type: String,
+        default: '',
+    },
+    type: {
+        type: String,
+        enum: ['image', 'video'],
+    },
+    contentType: {
+        type: String,
+        required: true,
+    },
+    key: {
+        type: String,
+        required: true,
     },
 });
 
@@ -74,12 +68,12 @@ const eventSchema = new Schema<IEvent>(
         coverImage: {
             type: String,
         },
-        gallery: [eventMediaItemSchema],
+        medias: [eventMediaItemSchema],
         
         // Status
         status: {
             type: String,
-            enum: ['draft', 'published', 'completed', 'cancelled'],
+            enum: ['draft', 'published', 'archived'],
             default: 'draft',
         },
         featured: {
