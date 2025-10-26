@@ -76,13 +76,6 @@ class EventCategoryRepository {
         ).exec();
     }
 
-    async toggleActive(id: string, isActive: boolean): Promise<IEventCategoryDocument | null> {
-        return await EventCategory.findByIdAndUpdate(
-            id,
-            { isActive, updatedAt: new Date() },
-            { new: true }
-        ).exec();
-    }
 
     async count(options?: { 
         isActive?: boolean;

@@ -6,7 +6,7 @@ import adminRepository from '../repository/adminRepository';
 import { BadRequestError } from '@common/errors/bad-request-error';
 import { mediaUpload } from '@common/services/mediaUpload';
 import { uniqueString } from '@common/services/uniqueString';
-import { MediaFile } from '@common/types/data';
+import { IEvent, MediaFile } from '@common/types/data';
 import eventRepository from 'admin/repository/eventRepository';
 
 class AdminController {
@@ -48,7 +48,7 @@ class AdminController {
         if (!req.user) {
             throw new BadRequestError('User not authenticated');
         }
-        
+
         const { email, name } = req.user;
 
         res.json({
@@ -58,31 +58,23 @@ class AdminController {
     }
 
     async getSignedUrl(req: Req, res: Res) {
-        const { title, description, photos = [], videos = [] } = req.body;
-
-        //Handle photos
-        const photoResults = await Promise.all(
-            photos.map(async (photo: MediaFile) => {
-                const { contentType } = photo;
-                const uniqueId = uniqueString.generateUniqueString();
-                const key = `media/photos/${title}-${uniqueId}`;
-                const { url } = await mediaUpload.getPresignedUrl(
-                    key,
-                    contentType
-                );
-                return { key, url };
-            })
+        const { title, mediaFiles = [] } = req.body;
+        const thresholdMB = parseInt(
+            process.env.MULTIPART_THRESHOLD_MB || '15'
         );
-        const threshold = parseInt(process.env.MULTIPART_THRESHOLD_MB || '15');
-        //Handle videos
-        const videoResults = await Promise.all(
-            videos.map(async (video: MediaFile) => {
-                const { contentType, size = 0 } = video;
+        const threshold = thresholdMB * 1024 * 1024;
+
+        const fileResults = await Promise.all(
+            mediaFiles.map(async (file: MediaFile) => {
+                const { contentType, size = 0, type } = file;
                 const uniqueId = uniqueString.generateUniqueString();
-                const key = `media/videos/${title}-${uniqueId}`;
+                const key = `media/${type}/${title}-${uniqueId}`;
 
                 if (size > threshold) {
-                    const parts = Math.ceil(size / 5); // approx 5MB per part
+                    const partSizeMB =
+                        process.env.MULTIPART_PART_SIZE_MB || '5';
+                    const partSize = parseInt(partSizeMB) * 1024 * 1024;
+                    const parts = Math.ceil(size / partSize);
                     const multipartResult =
                         await mediaUpload.getMultipartPresignedUrls(
                             key,
@@ -95,6 +87,8 @@ class AdminController {
                         uploadId: multipartResult.uploadId,
                         parts: multipartResult.urls,
                         multipart: true,
+                        type,
+                        id: file.id,
                     };
                 } else {
                     const { url } = await mediaUpload.getPresignedUrl(
@@ -105,26 +99,134 @@ class AdminController {
                         key,
                         url,
                         multipart: false,
+                        type,
+                        id: file.id,
                     };
                 }
             })
         );
-
+        const images = fileResults.filter((file) => file.type === 'image');
+        const videos = fileResults.filter((file) => file.type === 'video');
         res.status(200).json({
             success: true,
             message: 'Presigned URLs generated successfully',
             data: {
                 title,
-                description,
-                photos: photoResults,
-                videos: videoResults,
+                files: fileResults,
+                images,
+                videos,
             },
         });
     }
 
+    async completeMultipartUploadBatch(req: Req, res: Res) {
+        const { uploads } = req.body;
+        if (!uploads || !Array.isArray(uploads) || uploads.length === 0) {
+            throw new BadRequestError('No uploads provided');
+        }
+        const results = await Promise.all(
+            uploads.map(async (upload: any) => {
+                const { key, uploadId, parts } = upload;
+                return mediaUpload.completeMultipartUpload(
+                    key,
+                    uploadId,
+                    parts
+                );
+            })
+        );
+        res.status(200).json({
+            success: true,
+            message: 'All uploads completed successfully',
+            data: results,
+        });
+    }
+
+    async abortMultipartUpload(req: Req, res: Res) {
+        const { key, uploadId } = req.body;
+        if (!key || !uploadId) {
+            throw new BadRequestError('Key and Upload ID are required');
+        }
+        await mediaUpload.abortMultipartUpload(key, uploadId);
+        res.status(200).json({
+            success: true,
+            message: 'Multipart upload aborted successfully',
+        });
+    }
+
     async createEvent(req: Req, res: Res) {
-        const { title, description, photos = [], videos = [] } = req.body;
-        const event = { title, description, photos, videos };
+        const {
+            title,
+            description,
+            categoryId,
+            date,
+            endDate,
+            time,
+            location,
+            coverImage,
+            medias,
+            status,
+            featured,
+            slug,
+        } = req.body;
+        const existingEvent = await eventRepository.findBySlug(slug);
+        if (existingEvent) {
+            throw new BadRequestError('Event with this slug already exists');
+        }
+        const completeMultipartUploadPromise = medias
+            .filter((m: any) => m.multipart)
+            .map(async (media: any) => {
+                return {
+                    key:await mediaUpload.completeMultipartUpload(
+                        media.key,
+                        media.uploadId,
+                        media.parts
+                    ),
+                    uploadId: media.uploadId,
+                };
+            });
+
+        let multipartMediaKey: { key: string; uploadId: string }[] = [];
+        if (completeMultipartUploadPromise.length > 0) {
+            multipartMediaKey = await Promise.all(
+                completeMultipartUploadPromise
+            );
+        }
+        const storableMediaInfo = medias.map((media: any) => {
+            if (media.multipart) {
+                const completedMedia = multipartMediaKey.find(
+                    (m: any) => m.uploadId === media.uploadId
+                );
+                return {
+                    featured: media.featured,
+                    caption: media.caption,
+                    type: media.type,
+                    contentType: media.contentType,
+                    key: completedMedia?.key,
+                };
+            }
+            return {
+                featured: media.featured,
+                caption: media.caption,
+                type: media.type,
+                contentType: media.contentType,
+                key: media.key,
+            };
+        });
+        const event: IEvent = {
+            title,
+            description,
+            categoryId,
+            date,
+            endDate,
+            time,
+            location,
+            coverImage,
+            medias: storableMediaInfo,
+            status,
+            featured,
+            slug,
+            createdBy: req.user?.email as string,
+        };
         const newEvent = await eventRepository.createEvent(event);
         res.status(201).json({
             success: true,
