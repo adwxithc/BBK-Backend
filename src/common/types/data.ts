@@ -53,6 +53,7 @@ export interface IEvent {
     createdBy: string;               // Admin ID
     createdAt?: Date;
     updatedAt?: Date;
+    isDeleted?: boolean;
 }
 
 export interface MediaFile {

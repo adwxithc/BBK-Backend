@@ -80,7 +80,10 @@ const eventSchema = new Schema<IEvent>(
             type: Boolean,
             default: false,
         },
-        
+        isDeleted: {
+            type: Boolean,
+            default: false,
+        },
         // Metadata
         createdBy: {
             type: String,
