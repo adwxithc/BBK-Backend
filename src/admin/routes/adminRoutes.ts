@@ -12,8 +12,10 @@ import {
     getEventCategoriesValidations,
     completeMultipartUploadBatchValidations,
     abortMultipartUploadValidations,
+    getEventsValidations,
 } from '../validations/api';
 import protectAdmin from '@common/middlewares/protect';
+import { eventController } from 'admin/controller/eventController';
 
 export function adminRouter(router: Router) {
     router.post(
@@ -52,8 +54,15 @@ export function adminRouter(router: Router) {
         protectAdmin,
         createEventValidations,
         validateRequest,
-        asyncHandler(adminController.createEvent)
+        asyncHandler(eventController.createEvent)
     );
+    router.get(
+        '/events',
+        protectAdmin,
+        getEventsValidations,
+        validateRequest,
+        asyncHandler(eventController.getAllEvents)
+    )
 
     // Event Category Routes
     // Create a new event category
