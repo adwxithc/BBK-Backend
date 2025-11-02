@@ -383,4 +383,11 @@ export const getEventsValidations = [
         .optional()
         .isBoolean()
         .withMessage('Featured must be a boolean value (true or false)'),
+    query('categoryIds')
+        .optional()
+        .isArray()
+        .withMessage('Category IDs must be an array of strings'),
+    query('categoryIds.*')
+        .isMongoId()
+        .withMessage('Each Category ID must be a valid MongoDB ObjectId'),
 ];
