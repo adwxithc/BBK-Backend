@@ -357,3 +357,30 @@ export const getEventCategoriesValidations = [
         .withMessage('Limit must be a positive integer between 1 and 100')
         .toInt(),
 ];
+
+export const getEventsValidations = [
+    query('page')
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage('Page must be a positive integer')
+        .toInt(),
+
+    query('limit')
+        .optional()
+        .isInt({ min: 1, max: 100 })
+        .withMessage('Limit must be a positive integer between 1 and 100')
+        .toInt(),
+    query('search')
+        .optional()
+        .isString()
+        .withMessage('Search must be a string')
+        .isLength({ min: 1, max: 100 })
+        .withMessage('Search must be between 1 and 100 characters')
+        .trim(),
+
+    query('status').optional().isIn(['draft', 'published', 'archived']),
+    query('featured')
+        .optional()
+        .isBoolean()
+        .withMessage('Featured must be a boolean value (true or false)'),
+];

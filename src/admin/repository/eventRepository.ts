@@ -8,6 +8,53 @@ class EventRepsitory {
     async findBySlug(slug: string): Promise<IEvent | null> {
         return await EventModel.findOne({ slug, isDeleted: false }).exec();
     }
+
+    async findAll(options?: {
+        status?: string;
+        featured?: string;
+        search?: string;
+        limit?: number;
+        skip?: number;
+    }): Promise<IEvent[]> {
+
+        const query: any = { isDeleted: false };
+        if (options?.status) {
+            query.status = options.status;
+        }
+        if (options?.featured) {
+            query.featured = options.featured;
+        }
+        if (options?.search) {
+            query.$text = { $search: options.search };
+        }
+        let mongoQuery = EventModel.find(query).sort({ createdAt: -1 });
+
+        if (options?.limit) {
+            mongoQuery = mongoQuery.limit(options.limit);
+        }
+        if (options?.skip) {
+            mongoQuery = mongoQuery.skip(options.skip);
+        }
+        return await mongoQuery.exec();
+    }
+
+    async count(options?: {
+        status?: string;
+        featured?: string;
+        search?: string;
+    }): Promise<number> {
+        const query: any = { isDeleted: false };
+        if (options?.status) {
+            query.status = options.status;
+        }
+        if (options?.featured) {
+            query.featured = options.featured;
+        }
+        if (options?.search) {
+            query.$text = { $search: options.search };
+        }
+        return await EventModel.countDocuments(query).exec();
+    }
 }
 
 export default new EventRepsitory();
