@@ -3,6 +3,8 @@ import { mediaUpload } from '@common/services/mediaUpload';
 import { IEvent } from '@common/types/data';
 import { Req, Res } from '@common/types/expressTypes';
 import eventRepository from 'admin/repository/eventRepository';
+import { time } from 'console';
+import { create } from 'domain';
 
 class EventController {
     async createEvent(req: Req, res: Res) {
@@ -121,14 +123,45 @@ class EventController {
                 ...(search && { search: search as string }),
             }),
         ]);
+
+        const responseEvents = events.map((event) => ({
+            categoryId: event.categoryId,
+            coverImage: event.coverImage
+                ? mediaUpload.getMediaUrl(event.coverImage || '')
+                : undefined,
+            createdAt: event.createdAt,
+            createdBy: event.createdBy,
+            date: event.date,
+            description: event.description,
+            endDate: event.endDate,
+            featured: event.featured,
+            location: event.location,
+            slug: event.slug,
+            status: event.status,
+            time: event.time,
+            title: event.title,
+            updatedAt: event.updatedAt,
+            _id: event._id,
+            medias: event.medias.map((media) => ({
+                _id: media._id,
+                featured: media.featured,
+                caption: media.caption,
+                type: media.type,
+                contentType: media.contentType,
+                key: media.key,
+                url: mediaUpload.getMediaUrl(media.key),
+            })),
+        }));
         res.status(200).json({
             success: true,
-            data: events,
-            pagination: {
-                currentPage: pageNum,
-                totalPages: Math.ceil(total / limitNum),
-                totalItems: total,
-                itemsPerPage: limitNum,
+            data: {
+                events: responseEvents,
+                pagination: {
+                    currentPage: pageNum,
+                    totalPages: Math.ceil(total / limitNum),
+                    totalItems: total,
+                    itemsPerPage: limitNum,
+                },
             },
         });
     }

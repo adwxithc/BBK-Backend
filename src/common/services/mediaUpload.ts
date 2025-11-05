@@ -73,6 +73,12 @@ class MediaUpload {
         });
         await s3.send(abortCommand);
     }
+
+    getMediaUrl(key: string) {
+        const bucket = process.env.AWS_BUCKET_NAME;
+        const region = process.env.AWS_REGION;
+        return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+    }
 }
 
 export const mediaUpload = new MediaUpload();
