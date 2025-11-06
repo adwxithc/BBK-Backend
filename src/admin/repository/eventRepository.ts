@@ -24,8 +24,13 @@ class EventRepsitory {
         if (options?.featured) {
             query.featured = options.featured;
         }
-        if (options?.search) {
-            query.$text = { $search: options.search };
+        if (options?.search && options.search.trim()) {
+            // Use regex for partial matching with case-insensitive search
+            const searchTerm = options.search.trim();
+            query.$or = [
+                { title: { $regex: searchTerm, $options: 'i' } },
+                { description: { $regex: searchTerm, $options: 'i' } }
+            ];
         }
         let mongoQuery = EventModel.find(query).sort({ createdAt: -1 });
 
@@ -50,8 +55,12 @@ class EventRepsitory {
         if (options?.featured) {
             query.featured = options.featured;
         }
-        if (options?.search) {
-            query.$text = { $search: options.search };
+        if (options?.search && options.search.trim()) {
+            const searchTerm = options.search.trim();
+            query.$or = [
+                { title: { $regex: searchTerm, $options: 'i' } },
+                { description: { $regex: searchTerm, $options: 'i' } }
+            ];
         }
         return await EventModel.countDocuments(query).exec();
     }
