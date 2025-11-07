@@ -165,5 +165,118 @@ class EventController {
             },
         });
     }
+
+    async updateEvent(req: Req, res: Res) {
+        const { id } = req.params;
+        const {
+            title,
+            description,
+            categoryId,
+            date,
+            endDate,
+            time,
+            location,
+            coverImage,
+            medias,
+            status,
+            featured,
+            slug,
+            deleteMedias = [],
+        } = req.body;
+
+        // Parallel: Check if event exists and slug uniqueness (if slug is changing)
+        const validationPromises: Promise<any>[] = [
+            eventRepository.findById(id),
+        ];
+
+        if (slug) {
+            validationPromises.push(eventRepository.findBySlug(slug));
+        }
+
+        const [existingEvent, slugExists] = await Promise.all(
+            validationPromises
+        );
+
+        if (!existingEvent) {
+            throw new BadRequestError('Event not found');
+        }
+
+        if (slug && slug !== existingEvent.slug && slugExists) {
+            throw new BadRequestError('Event with this slug already exists');
+        }
+
+        // Parallel: Complete multipart uploads AND delete old media
+        const multipartUploads = medias
+            .filter((m: any) => m.multipart)
+            .map((media: any) =>
+                mediaUpload
+                    .completeMultipartUpload(
+                        media.key,
+                        media.uploadId,
+                        media.parts
+                    )
+                    .then((key) => ({ key, uploadId: media.uploadId }))
+            );
+
+        const deleteMediaPromises = deleteMedias.map((key: string) =>
+            mediaUpload.deleteMedia(key)
+        );
+
+        // Execute uploads and deletes in parallel
+        const [multipartMediaKey] = await Promise.all([
+            multipartUploads.length > 0
+                ? Promise.all(multipartUploads)
+                : Promise.resolve([]),
+            deleteMediaPromises.length > 0
+                ? Promise.all(deleteMediaPromises)
+                : Promise.resolve([]),
+        ]);
+
+        // Build storable media info
+        const storableMediaInfo = medias.map((media: any) => {
+            if (media.multipart) {
+                const completedMedia = multipartMediaKey.find(
+                    (m: any) => m.uploadId === media.uploadId
+                );
+                return {
+                    featured: media.featured,
+                    caption: media.caption,
+                    type: media.type,
+                    contentType: media.contentType,
+                    key: completedMedia?.key,
+                };
+            }
+            return {
+                featured: media.featured,
+                caption: media.caption,
+                type: media.type,
+                contentType: media.contentType,
+                key: media.key,
+            };
+        });
+
+        const updates: Partial<IEvent> = {
+            title,
+            description,
+            categoryId,
+            date,
+            endDate,
+            time,
+            location,
+            coverImage,
+            medias: storableMediaInfo,
+            status,
+            featured,
+            slug,
+        };
+
+        const updatedEvent = await eventRepository.updateEvent(id, updates);
+
+        res.status(200).json({
+            success: true,
+            message: 'Event updated successfully',
+            data: updatedEvent,
+        });
+    }
 }
 export const eventController = new EventController();

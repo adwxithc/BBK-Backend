@@ -9,6 +9,18 @@ class EventRepsitory {
         return await EventModel.findOne({ slug, isDeleted: false }).exec();
     }
 
+    async findById(id: string): Promise<IEvent | null> {
+        return await EventModel.findOne({ _id: id, isDeleted: false }).exec();
+    }
+
+    async updateEvent(id: string, updates: Partial<IEvent>): Promise<IEvent | null> {
+        return await EventModel.findOneAndUpdate(
+            { _id: id, isDeleted: false },
+            { $set: updates },
+            { new: true }
+        ).exec();
+    }
+
     async findAll(options?: {
         status?: string;
         featured?: string;
