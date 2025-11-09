@@ -6,6 +6,7 @@ import {
     CompleteMultipartUploadCommand,
     AbortMultipartUploadCommand,
     DeleteObjectCommand,
+    DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -85,6 +86,19 @@ class MediaUpload {
         const deleteCommand = new DeleteObjectCommand({
             Bucket: process.env.AWS_BUCKET_NAME,
             Key: key,
+        });
+        await s3.send(deleteCommand);
+    }
+
+    async deleteMediaBatch(keys: string[]) {
+        if (keys.length === 0) return;
+        
+        const deleteCommand = new DeleteObjectsCommand({
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Delete: {
+                Objects: keys.map(key => ({ Key: key })),
+                Quiet: false,
+            },
         });
         await s3.send(deleteCommand);
     }

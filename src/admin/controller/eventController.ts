@@ -217,21 +217,23 @@ class EventController {
                     )
                     .then((key) => ({ key, uploadId: media.uploadId }))
             );
-        const deleteMediaPromises = deletedMedias
+        
+        // Collect all media keys to delete
+        const keysToDelete = deletedMedias
             .filter(
                 (media: any) =>
                     media && media.key && typeof media.key === 'string'
             )
-            .map((media: any) => mediaUpload.deleteMedia(media.key));
+            .map((media: any) => media.key);
 
-        // Execute uploads and deletes in parallel
+        // Execute uploads and batch delete in parallel
         const [multipartMediaKey] = await Promise.all([
             multipartUploads.length > 0
                 ? Promise.all(multipartUploads)
                 : Promise.resolve([]),
-            deleteMediaPromises.length > 0
-                ? Promise.all(deleteMediaPromises)
-                : Promise.resolve([]),
+            keysToDelete.length > 0
+                ? mediaUpload.deleteMediaBatch(keysToDelete)
+                : Promise.resolve(),
         ]);
 
         // Build storable media info
@@ -289,6 +291,29 @@ class EventController {
             throw new BadRequestError('Event not found');
         }
 
+        // Collect all media keys to delete
+        const keysToDelete: string[] = [];
+        
+        // Add cover image if exists
+        if (existingEvent.coverImage) {
+            keysToDelete.push(existingEvent.coverImage);
+        }
+        
+        // Add all media files
+        if (existingEvent.medias && existingEvent.medias.length > 0) {
+            existingEvent.medias.forEach((media: any) => {
+                if (media.key) {
+                    keysToDelete.push(media.key);
+                }
+            });
+        }
+
+        // Delete all media in a single batch operation
+        if (keysToDelete.length > 0) {
+            await mediaUpload.deleteMediaBatch(keysToDelete);
+        }
+
+        // Soft delete event from database
         await eventRepository.deleteEvent(id);
 
         res.status(200).json({
