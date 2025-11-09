@@ -9,6 +9,26 @@ class EventRepsitory {
         return await EventModel.findOne({ slug, isDeleted: false }).exec();
     }
 
+    async findById(id: string): Promise<IEvent | null> {
+        return await EventModel.findOne({ _id: id, isDeleted: false }).exec();
+    }
+
+    async updateEvent(id: string, updates: Partial<IEvent>): Promise<IEvent | null> {
+        return await EventModel.findOneAndUpdate(
+            { _id: id, isDeleted: false },
+            { $set: updates },
+            { new: true }
+        ).exec();
+    }
+
+    async deleteEvent(id: string): Promise<IEvent | null> {
+        return await EventModel.findOneAndUpdate(
+            { _id: id, isDeleted: false },
+            { $set: { isDeleted: true } },
+            { new: true }
+        ).exec();
+    }
+
     async findAll(options?: {
         status?: string;
         featured?: string;
@@ -24,8 +44,13 @@ class EventRepsitory {
         if (options?.featured) {
             query.featured = options.featured;
         }
-        if (options?.search) {
-            query.$text = { $search: options.search };
+        if (options?.search && options.search.trim()) {
+            // Use regex for partial matching with case-insensitive search
+            const searchTerm = options.search.trim();
+            query.$or = [
+                { title: { $regex: searchTerm, $options: 'i' } },
+                { description: { $regex: searchTerm, $options: 'i' } }
+            ];
         }
         let mongoQuery = EventModel.find(query).sort({ createdAt: -1 });
 
@@ -50,8 +75,12 @@ class EventRepsitory {
         if (options?.featured) {
             query.featured = options.featured;
         }
-        if (options?.search) {
-            query.$text = { $search: options.search };
+        if (options?.search && options.search.trim()) {
+            const searchTerm = options.search.trim();
+            query.$or = [
+                { title: { $regex: searchTerm, $options: 'i' } },
+                { description: { $regex: searchTerm, $options: 'i' } }
+            ];
         }
         return await EventModel.countDocuments(query).exec();
     }

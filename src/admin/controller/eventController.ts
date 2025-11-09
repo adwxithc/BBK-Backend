@@ -3,6 +3,8 @@ import { mediaUpload } from '@common/services/mediaUpload';
 import { IEvent } from '@common/types/data';
 import { Req, Res } from '@common/types/expressTypes';
 import eventRepository from 'admin/repository/eventRepository';
+import { time } from 'console';
+import { create } from 'domain';
 
 class EventController {
     async createEvent(req: Req, res: Res) {
@@ -121,15 +123,202 @@ class EventController {
                 ...(search && { search: search as string }),
             }),
         ]);
+
+        const responseEvents = events.map((event) => ({
+            categoryId: event.categoryId,
+            coverImage: event.coverImage
+                ? mediaUpload.getMediaUrl(event.coverImage || '')
+                : undefined,
+            createdAt: event.createdAt,
+            createdBy: event.createdBy,
+            date: event.date,
+            description: event.description,
+            endDate: event.endDate,
+            featured: event.featured,
+            location: event.location,
+            slug: event.slug,
+            status: event.status,
+            time: event.time,
+            title: event.title,
+            updatedAt: event.updatedAt,
+            _id: event._id,
+            medias: event.medias.map((media) => ({
+                _id: media._id,
+                featured: media.featured,
+                caption: media.caption,
+                type: media.type,
+                contentType: media.contentType,
+                key: media.key,
+                url: mediaUpload.getMediaUrl(media.key),
+            })),
+        }));
         res.status(200).json({
             success: true,
-            data: events,
-            pagination: {
-                currentPage: pageNum,
-                totalPages: Math.ceil(total / limitNum),
-                totalItems: total,
-                itemsPerPage: limitNum,
+            data: {
+                events: responseEvents,
+                pagination: {
+                    currentPage: pageNum,
+                    totalPages: Math.ceil(total / limitNum),
+                    totalItems: total,
+                    itemsPerPage: limitNum,
+                },
             },
+        });
+    }
+
+    async updateEvent(req: Req, res: Res) {
+        const { id } = req.params;
+        const {
+            title,
+            description,
+            categoryId,
+            date,
+            endDate,
+            time,
+            location,
+            coverImage,
+            medias,
+            status,
+            featured,
+            slug,
+            deletedMedias = [],
+        } = req.body;
+
+        // Parallel: Check if event exists and slug uniqueness (if slug is changing)
+        const validationPromises: Promise<any>[] = [
+            eventRepository.findById(id),
+        ];
+
+        if (slug) {
+            validationPromises.push(eventRepository.findBySlug(slug));
+        }
+
+        const [existingEvent, slugExists] = await Promise.all(
+            validationPromises
+        );
+
+        if (!existingEvent) {
+            throw new BadRequestError('Event not found');
+        }
+
+        if (slug && slug !== existingEvent.slug && slugExists) {
+            throw new BadRequestError('Event with this slug already exists');
+        }
+
+        // Parallel: Complete multipart uploads AND delete old media
+        const multipartUploads = medias
+            .filter((m: any) => m.multipart)
+            .map((media: any) =>
+                mediaUpload
+                    .completeMultipartUpload(
+                        media.key,
+                        media.uploadId,
+                        media.parts
+                    )
+                    .then((key) => ({ key, uploadId: media.uploadId }))
+            );
+        
+        // Collect all media keys to delete
+        const keysToDelete = deletedMedias
+            .filter(
+                (media: any) =>
+                    media && media.key && typeof media.key === 'string'
+            )
+            .map((media: any) => media.key);
+
+        // Execute uploads and batch delete in parallel
+        const [multipartMediaKey] = await Promise.all([
+            multipartUploads.length > 0
+                ? Promise.all(multipartUploads)
+                : Promise.resolve([]),
+            keysToDelete.length > 0
+                ? mediaUpload.deleteMediaBatch(keysToDelete)
+                : Promise.resolve(),
+        ]);
+
+        // Build storable media info
+        const storableMediaInfo = medias.map((media: any) => {
+            if (media.multipart) {
+                const completedMedia = multipartMediaKey.find(
+                    (m: any) => m.uploadId === media.uploadId
+                );
+                return {
+                    featured: media.featured,
+                    caption: media.caption,
+                    type: media.type,
+                    contentType: media.contentType,
+                    key: completedMedia?.key,
+                };
+            }
+            return {
+                featured: media.featured,
+                caption: media.caption,
+                type: media.type,
+                contentType: media.contentType,
+                key: media.key,
+            };
+        });
+
+        const updates: Partial<IEvent> = {
+            title,
+            description,
+            categoryId,
+            date,
+            endDate,
+            time,
+            location,
+            coverImage,
+            medias: storableMediaInfo,
+            status,
+            featured,
+            slug,
+        };
+
+        const updatedEvent = await eventRepository.updateEvent(id, updates);
+
+        res.status(200).json({
+            success: true,
+            message: 'Event updated successfully',
+            data: updatedEvent,
+        });
+    }
+
+    async deleteEvent(req: Req, res: Res) {
+        const { id } = req.params;
+
+        const existingEvent = await eventRepository.findById(id);
+        if (!existingEvent) {
+            throw new BadRequestError('Event not found');
+        }
+
+        // Collect all media keys to delete
+        const keysToDelete: string[] = [];
+        
+        // Add cover image if exists
+        if (existingEvent.coverImage) {
+            keysToDelete.push(existingEvent.coverImage);
+        }
+        
+        // Add all media files
+        if (existingEvent.medias && existingEvent.medias.length > 0) {
+            existingEvent.medias.forEach((media: any) => {
+                if (media.key) {
+                    keysToDelete.push(media.key);
+                }
+            });
+        }
+
+        // Delete all media in a single batch operation
+        if (keysToDelete.length > 0) {
+            await mediaUpload.deleteMediaBatch(keysToDelete);
+        }
+
+        // Soft delete event from database
+        await eventRepository.deleteEvent(id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Event deleted successfully',
         });
     }
 }
