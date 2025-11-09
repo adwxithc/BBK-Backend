@@ -21,6 +21,14 @@ class EventRepsitory {
         ).exec();
     }
 
+    async deleteEvent(id: string): Promise<IEvent | null> {
+        return await EventModel.findOneAndUpdate(
+            { _id: id, isDeleted: false },
+            { $set: { isDeleted: true } },
+            { new: true }
+        ).exec();
+    }
+
     async findAll(options?: {
         status?: string;
         featured?: string;

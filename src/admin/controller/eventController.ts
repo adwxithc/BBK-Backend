@@ -181,7 +181,7 @@ class EventController {
             status,
             featured,
             slug,
-            deleteMedias = [],
+            deletedMedias = [],
         } = req.body;
 
         // Parallel: Check if event exists and slug uniqueness (if slug is changing)
@@ -217,10 +217,12 @@ class EventController {
                     )
                     .then((key) => ({ key, uploadId: media.uploadId }))
             );
-
-        const deleteMediaPromises = deleteMedias.map((key: string) =>
-            mediaUpload.deleteMedia(key)
-        );
+        const deleteMediaPromises = deletedMedias
+            .filter(
+                (media: any) =>
+                    media && media.key && typeof media.key === 'string'
+            )
+            .map((media: any) => mediaUpload.deleteMedia(media.key));
 
         // Execute uploads and deletes in parallel
         const [multipartMediaKey] = await Promise.all([
@@ -276,6 +278,22 @@ class EventController {
             success: true,
             message: 'Event updated successfully',
             data: updatedEvent,
+        });
+    }
+
+    async deleteEvent(req: Req, res: Res) {
+        const { id } = req.params;
+
+        const existingEvent = await eventRepository.findById(id);
+        if (!existingEvent) {
+            throw new BadRequestError('Event not found');
+        }
+
+        await eventRepository.deleteEvent(id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Event deleted successfully',
         });
     }
 }

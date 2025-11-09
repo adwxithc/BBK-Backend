@@ -159,7 +159,8 @@ export const createEventValidations = [
         .isLength({ max: 200 })
         .withMessage('Location must not exceed 200 characters'),
     body('coverImage')
-        .optional()
+        .notEmpty()
+        .withMessage('Cover Image is required')
         .isString()
         .withMessage('Cover Image must be a string (key)'),
     body('status')
@@ -399,23 +400,19 @@ export const updateEventValidations = [
         .isMongoId()
         .withMessage('Event ID must be a valid MongoDB ObjectId'),
     body('title')
-        .optional()
         .isString()
         .withMessage('Title must be a string')
         .isLength({ max: 100 })
         .withMessage('Title must not exceed 100 characters'),
     body('description')
-        .optional()
         .isString()
         .withMessage('Description must be a string')
         .isLength({ max: 5000 })
         .withMessage('Description must not exceed 5000 characters'),
     body('categoryId')
-        .optional()
         .isMongoId()
         .withMessage('Category ID must be a valid MongoDB ObjectId'),
     body('slug')
-        .optional()
         .isString()
         .withMessage('Slug must be a string')
         .isLength({ max: 100 })
@@ -426,7 +423,6 @@ export const updateEventValidations = [
         )
         .trim(),
     body('date')
-        .optional()
         .isISO8601()
         .withMessage('Date must be a valid ISO 8601 date'),
     body('endDate')
@@ -439,9 +435,8 @@ export const updateEventValidations = [
             }
             return true;
         }),
-    body('time').optional().isString().withMessage('Time must be a string'),
+    body('time').isString().withMessage('Time must be a string'),
     body('location')
-        .optional()
         .isString()
         .withMessage('Location must be a string')
         .isLength({ max: 200 })
@@ -451,7 +446,6 @@ export const updateEventValidations = [
         .isString()
         .withMessage('Cover Image must be a string (key)'),
     body('status')
-        .optional()
         .isString()
         .withMessage('Status must be a string')
         .isIn(['draft', 'published', 'archived'])
@@ -459,7 +453,6 @@ export const updateEventValidations = [
             'Status must be one of the following: draft, published, archived'
         ),
     body('featured')
-        .optional()
         .isBoolean()
         .withMessage('Featured must be a boolean value'),
     body('medias')

@@ -71,6 +71,11 @@ export function adminRouter(router: Router) {
         validateRequest,
         asyncHandler(eventController.updateEvent)
     );
+    router.delete(
+        '/event/:id',
+        protectAdmin,
+        asyncHandler(eventController.deleteEvent)
+    );
 
     // Event Category Routes
     // Create a new event category
