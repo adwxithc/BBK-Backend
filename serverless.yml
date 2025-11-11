@@ -24,6 +24,13 @@ functions:
       - httpApi:
           path: /admin/{proxy+}
           method: ANY
+  
+  publicApi:
+    handler: src/public/index.handler
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
 
 plugins:
   - serverless-offline
