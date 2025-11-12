@@ -12,7 +12,7 @@ class PublicEventController {
             page = '1',
             limit = '12',
         } = req.query;
-        
+
         const pageNum = parseInt(page as string, 10);
         const limitNum = parseInt(limit as string, 10);
         const skip = (pageNum - 1) * limitNum;
@@ -36,7 +36,9 @@ class PublicEventController {
             publicEventRepository.findPublishedEvents(options),
             publicEventRepository.countPublishedEvents({
                 ...(categoryId && { categoryId: categoryId as string }),
-                ...(featured !== undefined && { featured: featured === 'true' }),
+                ...(featured !== undefined && {
+                    featured: featured === 'true',
+                }),
                 ...(search && { search: search as string }),
             }),
         ]);
@@ -57,13 +59,14 @@ class PublicEventController {
                 : null,
             featured: event.featured,
             createdAt: event.createdAt,
-            medias: event.medias?.map((media) => ({
-                _id: media._id,
-                featured: media.featured,
-                caption: media.caption,
-                type: media.type,
-                url: mediaUpload.getMediaUrl(media.key),
-            })) || [],
+            medias:
+                event.medias?.map((media) => ({
+                    _id: media._id,
+                    featured: media.featured,
+                    caption: media.caption,
+                    type: media.type,
+                    url: mediaUpload.getMediaUrl(media.key),
+                })) || [],
         }));
 
         res.status(200).json({
@@ -83,15 +86,16 @@ class PublicEventController {
     async getEventsByCategory(req: Req, res: Res) {
         const { categorySlug } = req.params;
         const { page = '1', limit = '12' } = req.query;
-        
+
         const pageNum = parseInt(page as string, 10);
         const limitNum = parseInt(limit as string, 10);
         const skip = (pageNum - 1) * limitNum;
 
-        const events = await publicEventRepository.findEventsByCategory(
-            categorySlug,
-            { limit: limitNum, skip }
-        );
+        const { events, metadata } =
+            await publicEventRepository.aggregateEventsByCategory(
+                categorySlug,
+                { limit: limitNum, skip }
+            );
 
         const responseEvents = events.map((event) => ({
             _id: event._id,
@@ -115,6 +119,12 @@ class PublicEventController {
             success: true,
             data: {
                 events: responseEvents,
+                pagination: {
+                    currentPage: pageNum,
+                    totalPages: Math.ceil(metadata.total / limitNum),
+                    totalItems: metadata.total,
+                    itemsPerPage: limitNum,
+                },
             },
         });
     }

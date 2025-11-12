@@ -90,13 +90,13 @@ class PublicEventRepository {
             .lean();
     }
 
-    async findEventsByCategory(
+    async aggregateEventsByCategory(
         categorySlug: string,
         options: { limit?: number; skip?: number } = {}
-    ): Promise<any[]> {
+    ): Promise<{ events: IEvent[]; metadata: { total: number } }> {
         const { limit = 10, skip = 0 } = options;
 
-        const events = await EventCategory.aggregate([
+        const results = await EventCategory.aggregate([
             {
                 $match: {
                     slug: categorySlug,
@@ -105,29 +105,46 @@ class PublicEventRepository {
                 },
             },
             {
-                $lookup: {
-                    from: 'events',
-                    localField: '_id',
-                    foreignField: 'categoryId',
-                    as: 'events',
+                $facet: {
+                    metadata: [{ $count: 'total' }],
+                    events: [
+                        {
+                            $lookup: {
+                                from: 'events',
+                                localField: '_id',
+                                foreignField: 'categoryId',
+                                as: 'events',
+                            },
+                        },
+                        {
+                            $unwind: '$events',
+                        },
+                        {
+                            $sort: {
+                                'events.date': -1,
+                                'events.createdAt': -1,
+                            },
+                        },
+                        {
+                            $skip: skip,
+                        },
+                        {
+                            $limit: limit,
+                        },
+                    ],
                 },
-            },
-            {
-                $unwind: '$events',
-            },
-            {
-                $sort: {
-                    'events.date': -1,
-                    'events.createdAt': -1,
-                },
-            },
-            {
-                $skip: skip,
-            },
-            {
-                $limit: limit,
             },
         ]);
+        const data =
+            results.length > 0
+                ? results[0]
+                : { metadata: { total: 0 }, events: [] };
+        const { metadata, events } = data;
+
+        return { events, metadata: metadata[0] } as {
+            events: IEvent[];
+            metadata: { total: number };
+        };
     }
 }
 

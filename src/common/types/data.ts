@@ -1,3 +1,4 @@
+import { Schema } from 'mongoose';
 import { IEventCategory } from '../model/eventCategoryModel';
 
 export interface IAdmin {
@@ -32,7 +33,7 @@ export interface IEvent {
     slug: string;                    // URL-friendly: "annual-day-2026"
     
     // Category relationship
-    categoryId: string;              // Reference to EventCategory._id
+    categoryId: Schema.Types.ObjectId;              // Reference to EventCategory._id
     category?: IEventCategory;       // Populated category data
     
     // Event details
