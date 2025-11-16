@@ -2,6 +2,7 @@ import { Req, Res } from '@common/types/expressTypes';
 import { mediaUpload } from '@common/services/mediaUpload';
 import publicEventRepository from '../repository/publicEventRepository';
 import { BadRequestError } from '@common/errors/bad-request-error';
+import publicEventCategoryRepository from 'public/repository/publicEventCategoryRepository';
 
 class PublicEventController {
     async getPublishedEvents(req: Req, res: Res) {
@@ -84,18 +85,43 @@ class PublicEventController {
     }
 
     async getEventsByCategory(req: Req, res: Res) {
-        const { categorySlug } = req.params;
+        const { categorySlug, featured, search } = req.params;
         const { page = '1', limit = '12' } = req.query;
 
         const pageNum = parseInt(page as string, 10);
         const limitNum = parseInt(limit as string, 10);
         const skip = (pageNum - 1) * limitNum;
 
-        const { events, metadata } =
-            await publicEventRepository.aggregateEventsByCategory(
-                categorySlug,
-                { limit: limitNum, skip }
+        const categoryExists =
+            await publicEventCategoryRepository.findCategoryBySlug(
+                categorySlug
             );
+        if (!categoryExists) {
+            throw new BadRequestError('Invalid category slug');
+        }
+        const options: any = {
+            limit: limitNum,
+            skip,
+            categoryId: categoryExists._id,
+        };
+
+        if (featured !== undefined) {
+            options.featured = featured === 'true';
+        }
+        if (search) {
+            options.search = search;
+        }
+
+        const [events, total] = await Promise.all([
+            publicEventRepository.findPublishedEvents(options),
+            publicEventRepository.countPublishedEvents({
+                categoryId: categoryExists._id as string,
+                ...(featured !== undefined && {
+                    featured: featured === 'true',
+                }),
+                ...(search && { search: search as string }),
+            }),
+        ]);
 
         const responseEvents = events.map((event) => ({
             _id: event._id,
@@ -113,16 +139,25 @@ class PublicEventController {
                 : null,
             featured: event.featured,
             createdAt: event.createdAt,
+            medias:
+                event.medias?.map((media) => ({
+                    _id: media._id,
+                    featured: media.featured,
+                    caption: media.caption,
+                    type: media.type,
+                    url: mediaUpload.getMediaUrl(media.key),
+                })) || [],
         }));
 
         res.status(200).json({
             success: true,
             data: {
                 events: responseEvents,
+                category: categoryExists,
                 pagination: {
                     currentPage: pageNum,
-                    totalPages: Math.ceil(metadata.total / limitNum),
-                    totalItems: metadata.total,
+                    totalPages: Math.ceil(total / limitNum),
+                    totalItems: total,
                     itemsPerPage: limitNum,
                 },
             },

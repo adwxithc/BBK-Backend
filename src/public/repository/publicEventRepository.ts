@@ -1,5 +1,7 @@
 import EventModel from '@common/model/eventModel';
-import EventCategory from '@common/model/eventCategoryModel';
+import EventCategory, {
+    IEventCategory,
+} from '@common/model/eventCategoryModel';
 import { IEvent } from '@common/types/data';
 
 interface PublicEventOptions {
@@ -23,7 +25,6 @@ class PublicEventRepository {
         const query: any = {
             status: 'published',
             isDeleted: false,
-            date: { $gte: new Date() }, // Only future events
         };
 
         if (categoryId) {
@@ -44,7 +45,7 @@ class PublicEventRepository {
 
         return await EventModel.find(query)
             .populate('category', 'name slug color')
-            .sort({ date: 1, createdAt: -1 })
+            .sort({ featured: -1, date: 1, createdAt: -1 })
             .skip(skip)
             .limit(limit)
             .lean();
@@ -58,7 +59,6 @@ class PublicEventRepository {
         const query: any = {
             status: 'published',
             isDeleted: false,
-            date: { $gte: new Date() }, // Only future events
         };
 
         if (categoryId) {
@@ -88,63 +88,6 @@ class PublicEventRepository {
         })
             .populate('category', 'name slug color description')
             .lean();
-    }
-
-    async aggregateEventsByCategory(
-        categorySlug: string,
-        options: { limit?: number; skip?: number } = {}
-    ): Promise<{ events: IEvent[]; metadata: { total: number } }> {
-        const { limit = 10, skip = 0 } = options;
-
-        const results = await EventCategory.aggregate([
-            {
-                $match: {
-                    slug: categorySlug,
-                    isActive: true,
-                    isDeleted: false,
-                },
-            },
-            {
-                $facet: {
-                    metadata: [{ $count: 'total' }],
-                    events: [
-                        {
-                            $lookup: {
-                                from: 'events',
-                                localField: '_id',
-                                foreignField: 'categoryId',
-                                as: 'events',
-                            },
-                        },
-                        {
-                            $unwind: '$events',
-                        },
-                        {
-                            $sort: {
-                                'events.date': -1,
-                                'events.createdAt': -1,
-                            },
-                        },
-                        {
-                            $skip: skip,
-                        },
-                        {
-                            $limit: limit,
-                        },
-                    ],
-                },
-            },
-        ]);
-        const data =
-            results.length > 0
-                ? results[0]
-                : { metadata: { total: 0 }, events: [] };
-        const { metadata, events } = data;
-
-        return { events, metadata: metadata[0] } as {
-            events: IEvent[];
-            metadata: { total: number };
-        };
     }
 }
 

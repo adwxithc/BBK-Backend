@@ -1,4 +1,6 @@
-import EventCategory, { IEventCategoryDocument } from '@common/model/eventCategoryModel';
+import EventCategory, {
+    IEventCategoryDocument,
+} from '@common/model/eventCategoryModel';
 
 interface PublicCategoryOptions {
     limit?: number;
@@ -11,7 +13,9 @@ interface PublicCategoryCountOptions {
 }
 
 class PublicEventCategoryRepository {
-    async findActiveCategories(options: PublicCategoryOptions): Promise<IEventCategoryDocument[]> {
+    async findActiveCategories(
+        options: PublicCategoryOptions
+    ): Promise<IEventCategoryDocument[]> {
         const { limit = 10, skip = 0, search } = options;
 
         const query: any = {
@@ -27,13 +31,16 @@ class PublicEventCategoryRepository {
         }
 
         return await EventCategory.find(query)
-            .sort({ name: 1 })
+            .select('name slug _id color')
+            .sort({ featured: -1, updatedAt: -1 })
             .skip(skip)
             .limit(limit)
             .lean();
     }
 
-    async countActiveCategories(options: PublicCategoryCountOptions): Promise<number> {
+    async countActiveCategories(
+        options: PublicCategoryCountOptions
+    ): Promise<number> {
         const { search } = options;
 
         const query: any = {
@@ -51,7 +58,9 @@ class PublicEventCategoryRepository {
         return await EventCategory.countDocuments(query);
     }
 
-    async findCategoryBySlug(slug: string): Promise<IEventCategoryDocument | null> {
+    async findCategoryBySlug(
+        slug: string
+    ): Promise<IEventCategoryDocument | null> {
         return await EventCategory.findOne({
             slug,
             isActive: true,
@@ -64,7 +73,8 @@ class PublicEventCategoryRepository {
             isActive: true,
             isDeleted: false,
         })
-            .sort({ name: 1 })
+            .select('name slug _id color createdAt updatedAt')
+            .sort({ featured: -1, updatedAt: -1 })
             .lean();
     }
 }
