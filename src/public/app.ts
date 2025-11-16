@@ -1,41 +1,48 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { errorHandler } from 'common/middlewares/error-handler';
-import { adminRouter } from './routes/adminRoutes';
-import cookieParser from 'cookie-parser';
+import { publicRouter } from './routes/publicRoutes';
 import cors from 'cors';
+
 const app = express();
 
 const corsOptions = {
-    origin: [process.env.FE_BASE_URL || 'http://localhost:3000'],
-    credentials: true, // Allow cookies
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    origin: '*', // Allow all origins for public API
+    methods: ['GET', 'OPTIONS'],
     allowedHeaders: [
         'Content-Type',
-        'Authorization',
-        'Cookie',
+        'Authorization', 
         'X-Requested-With',
         'Accept',
         'Origin',
         'Access-Control-Request-Method',
-        'Access-Control-Request-Headers',
+        'Access-Control-Request-Headers'
     ],
-    exposedHeaders: ['Set-Cookie'],
     preflightContinue: false,
-    optionsSuccessStatus: 200,
+    optionsSuccessStatus: 200
 };
-app.use(cors(corsOptions));
 
-app.use(cookieParser());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/admin', adminRouter(express.Router()));
+// Health check endpoint
+app.get('/health', (req: Request, res: Response) => {
+    res.status(200).json({
+        success: true,
+        message: 'Public API is healthy',
+        timestamp: new Date().toISOString(),
+    });
+});
+
+app.use('/api/v1', publicRouter(express.Router()));
 
 app.use((req: Request, res: Response, next: NextFunction) => {
     return res.status(404).json({
         success: false,
-        error: 'Not Found',
+        error: 'Not found',
     });
 });
+
 app.use(errorHandler);
+
 export default app;

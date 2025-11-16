@@ -42,7 +42,7 @@ const eventSchema = new Schema<IEvent>(
         
         // Category relationship
         categoryId: {
-            type: String,
+            type: Schema.Types.ObjectId,
             required: true,
             ref: 'EventCategory',
         },
