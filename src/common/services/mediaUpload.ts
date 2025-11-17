@@ -9,6 +9,7 @@ import {
     DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { getThumbnailKey, getAllThumbnailKeys, ThumbnailSize } from '@common/utils/thumbnailUtils';
 
 const s3 = new S3Client({ region: process.env.AWS_REGION });
 
@@ -101,6 +102,41 @@ class MediaUpload {
             },
         });
         await s3.send(deleteCommand);
+    }
+
+    /**
+     * Get thumbnail URL for an image
+     * @param originalKey - Original image S3 key
+     * @param size - Thumbnail size (small, medium, large)
+     * @returns Thumbnail URL
+     */
+    getThumbnailUrl(originalKey: string, size: ThumbnailSize = 'medium'): string {
+        const thumbnailKey = getThumbnailKey(originalKey, size);
+        return this.getMediaUrl(thumbnailKey);
+    }
+
+    /**
+     * Get all thumbnail URLs for an image
+     * @param originalKey - Original image S3 key
+     * @returns Object with all thumbnail URLs
+     */
+    getAllThumbnailUrls(originalKey: string): Record<ThumbnailSize, string> {
+        const keys = getAllThumbnailKeys(originalKey);
+        return {
+            small: this.getMediaUrl(keys.small),
+            medium: this.getMediaUrl(keys.medium),
+            large: this.getMediaUrl(keys.large),
+        };
+    }
+
+    /**
+     * Delete media and its thumbnails
+     * @param originalKey - Original image S3 key
+     */
+    async deleteMediaWithThumbnails(originalKey: string) {
+        const keys = getAllThumbnailKeys(originalKey);
+        const allKeys = [originalKey, keys.small, keys.medium, keys.large];
+        await this.deleteMediaBatch(allKeys);
     }
 }
 

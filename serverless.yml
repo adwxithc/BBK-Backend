@@ -16,6 +16,20 @@ provider:
     FE_BASE_URL: ${env:FE_BASE_URL}
     MULTIPART_PART_SIZE_MB: ${env:MULTIPART_PART_SIZE_MB}
     # AWS_REGION: ${env:AWS_REGION}
+  
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+            - s3:PutObject
+          Resource: "arn:aws:s3:::${env:AWS_BUCKET_NAME}/*"
+
+build:
+  esbuild:
+    external:
+      - sharp
 
 functions:
   api:
@@ -31,6 +45,29 @@ functions:
       - httpApi:
           path: /{proxy+}
           method: ANY
+  
+  thumbnailGenerator:
+    handler: src/thumbnail/index.handler
+    timeout: 60
+    memorySize: 1024
+    layers:
+      - sharp
+    events:
+      - s3:
+          bucket: ${env:AWS_BUCKET_NAME}
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: media/image/
+          existing: true
+
+layers:
+  sharp:
+    path: layers/sharp
+    name: ${self:service}-sharp-layer
+    description: Sharp image processing library for Lambda
+    compatibleRuntimes:
+      - nodejs20.x
+    retain: false
 
 plugins:
   - serverless-offline
