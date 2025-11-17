@@ -9,7 +9,6 @@ const s3Client = new S3Client({ region: process.env.AWS_REGION || 'us-east-1' })
 const THUMBNAIL_SIZES = [
     { name: 'small', width: 200, height: 200 },
     { name: 'medium', width: 400, height: 400 },
-    { name: 'large', width: 800, height: 800 },
 ];
 
 const SUPPORTED_IMAGE_TYPES = [
