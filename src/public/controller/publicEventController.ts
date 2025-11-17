@@ -84,6 +84,32 @@ class PublicEventController {
         });
     }
 
+    async getPublishedEventDetails(req: Req, res: Res) {
+        const { eventSlug } = req.params;
+        const event = await publicEventRepository.findEventBySlug(eventSlug);
+        if (!event) {
+            throw new BadRequestError('Event not found');
+        }
+        const eventResponse = {
+            ...event,
+            coverImage: event.coverImage
+                ? mediaUpload.getMediaUrl(event.coverImage)
+                : undefined,
+            medias:
+                event.medias?.map((media) => ({
+                    _id: media._id,
+                    featured: media.featured,
+                    caption: media.caption,
+                    type: media.type,
+                    url: mediaUpload.getMediaUrl(media.key),
+                })) || [],
+        };
+        res.status(200).json({
+            success: true,
+            data: eventResponse,
+        });
+    }
+
     async getEventsByCategory(req: Req, res: Res) {
         const { categorySlug, featured, search } = req.params;
         const { page = '1', limit = '12' } = req.query;

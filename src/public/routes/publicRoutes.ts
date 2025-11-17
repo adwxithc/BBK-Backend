@@ -6,6 +6,7 @@ import { validateRequest } from '@common/middlewares/validateRequest';
 import {
     validateGetEventCategories,
     validateGetEventsByCategory,
+    validateGetPublishedEvent,
     validateGetPublishedEvents,
 } from 'public/validations/api';
 
@@ -16,6 +17,12 @@ export const publicRouter = (router: Router) => {
         validateGetPublishedEvents,
         validateRequest,
         asyncHandler(publicEventController.getPublishedEvents)
+    );
+    router.get(
+        '/events/:eventSlug',
+        validateGetPublishedEvent,
+        validateRequest,
+        asyncHandler(publicEventController.getPublishedEventDetails)
     );
     router.get(
         '/events/category/:categorySlug',
@@ -33,7 +40,7 @@ export const publicRouter = (router: Router) => {
     );
     router.get(
         '/categories/all',
-        validateGetEventCategories,         
+        validateGetEventCategories,
         validateRequest,
         asyncHandler(publicEventCategoryController.getAllActiveCategories)
     );
