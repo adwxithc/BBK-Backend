@@ -6,7 +6,7 @@ import cors from 'cors';
 const app = express();
 
 const corsOptions = {
-    origin: [process.env.FE_BASE_URL || 'http://localhost:3000'],
+    origin: process.env.FE_BASE_URL,
     credentials: true, // Allow cookies
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
