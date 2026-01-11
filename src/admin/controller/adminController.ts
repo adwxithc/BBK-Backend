@@ -6,8 +6,7 @@ import adminRepository from '../repository/adminRepository';
 import { BadRequestError } from '@common/errors/bad-request-error';
 import { mediaUpload } from '@common/services/mediaUpload';
 import { uniqueString } from '@common/services/uniqueString';
-import { IEvent, MediaFile } from '@common/types/data';
-import eventRepository from 'admin/repository/eventRepository';
+import { MediaFile } from '@common/types/data';
 
 class AdminController {
     async login(req: Req, res: Res) {
