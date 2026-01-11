@@ -23,6 +23,11 @@ export const validateGetPublishedEvents = [
         .withMessage('Limit must be a positive integer')
         .toInt(),
 ];
+export const validateGetPublishedEvent=[
+    param('eventSlug')
+        .isString()
+        .withMessage('Event slug must be a string'),
+]
 export const validateGetEventsByCategory = [
     param('categorySlug')
         .isString()

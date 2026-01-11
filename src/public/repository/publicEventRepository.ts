@@ -87,6 +87,7 @@ class PublicEventRepository {
             isDeleted: false,
         })
             .populate('category', 'name slug color description')
+            .select('_id title description slug categoryId category date endDate time location coverImage featured createdAt updatedAt medias')
             .lean();
     }
 }

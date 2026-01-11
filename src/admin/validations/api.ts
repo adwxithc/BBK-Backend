@@ -292,6 +292,10 @@ export const createEventCategoryValidations = [
         .matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
         .withMessage('Color must be a valid hex color (e.g., #FF5733 or #F53)')
         .trim(),
+    body('featured')
+        .optional()
+        .isBoolean()
+        .withMessage('Featured must be a boolean'),
 ];
 
 export const updateEventCategoryValidations = [
