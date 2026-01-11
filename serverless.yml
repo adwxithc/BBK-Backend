@@ -8,6 +8,8 @@ service: bbk-admin
 provider:
   name: aws
   runtime: nodejs22.x
+  region: ap-south-1
+  stage: dev
   environment:
     MONGO_URI: ${env:MONGO_URI}
     JWT_KEY: ${env:JWT_KEY}
@@ -26,13 +28,24 @@ provider:
             - s3:PutObject
           Resource: "arn:aws:s3:::${env:AWS_BUCKET_NAME}/*"
 
-build:
-  esbuild:
-    external:
-      - sharp
+# build:
+#   esbuild:
+#     external:
+#       - sharp
+
+custom:
+  customDomain:
+    domainName: api.bbk.adwaith.store
+    certificateName: api.bbk.adwaith.store
+    basePath: ''
+    stage: ${self:provider.stage}
+    createRoute53Record: true
+    endpointType: 'regional'
+    securityPolicy: tls_1_2
+    apiType: http
 
 functions:
-  api:
+  adminApi:
     handler: src/admin/index.handler
     events:
       - httpApi:
@@ -46,28 +59,29 @@ functions:
           path: /{proxy+}
           method: ANY
   
-  thumbnailGenerator:
-    handler: src/thumbnail/index.handler
-    timeout: 60
-    memorySize: 1024
-    layers:
-      - sharp
-    events:
-      - s3:
-          bucket: ${env:AWS_BUCKET_NAME}
-          event: s3:ObjectCreated:*
-          rules:
-            - prefix: media/image/
-          existing: true
+  # thumbnailGenerator:
+  #   handler: src/thumbnail/index.handler
+  #   timeout: 60
+  #   memorySize: 1024
+  #   layers:
+  #     - sharp
+  #   events:
+  #     - s3:
+  #         bucket: ${env:AWS_BUCKET_NAME}
+  #         event: s3:ObjectCreated:*
+  #         rules:
+  #           - prefix: media/image/
+  #         existing: true
 
-layers:
-  sharp:
-    path: layers/sharp
-    name: ${self:service}-sharp-layer
-    description: Sharp image processing library for Lambda
-    compatibleRuntimes:
-      - nodejs20.x
-    retain: false
+# layers:
+#   sharp:
+#     path: layers/sharp
+#     name: ${self:service}-sharp-layer
+#     description: Sharp image processing library for Lambda
+#     compatibleRuntimes:
+#       - nodejs20.x
+#     retain: false
 
 plugins:
+  - serverless-domain-manager
   - serverless-offline
