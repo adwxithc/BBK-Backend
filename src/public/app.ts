@@ -6,8 +6,8 @@ import cors from 'cors';
 const app = express();
 
 const corsOptions = {
-    origin: '*', // Allow all origins for public API
-    methods: ['GET', 'OPTIONS'],
+    origin: process.env.FE_BASE_URL,
+    methods: ['GET', 'OPTIONS', 'POST'],
     allowedHeaders: [
         'Content-Type',
         'Authorization', 

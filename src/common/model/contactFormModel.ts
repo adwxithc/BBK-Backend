@@ -32,11 +32,11 @@ const contactFormSchema = new Schema<IContactForm>(
             required: true,
             trim: true,
             enum: [
-                'Enrollment Inquiry',
-                'Schedule a Tour',
-                'General Question',
-                'Feedback',
-                'Other'
+                'enrollment',
+                'tour',
+                'general',
+                'feedback',
+                'other'
             ],
         },
         message: {

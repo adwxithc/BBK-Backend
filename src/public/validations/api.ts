@@ -95,7 +95,7 @@ export const validateSubmitContactForm = [
         .isString()
         .withMessage('Subject must be a string')
         .trim()
-        .isIn(['Enrollment Inquiry', 'Schedule a Tour', 'General Question', 'Feedback', 'Other'])
+        .isIn(['enrollment', 'tour', 'general', 'feedback', 'other'])
         .withMessage('Subject must be one of: Enrollment Inquiry, Schedule a Tour, General Question, Feedback, Other'),
     body('message')
         .notEmpty()
