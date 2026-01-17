@@ -68,3 +68,41 @@ export const validateGetEventCategories = [
         .withMessage('Limit must be a positive integer')
         .toInt(),
 ];
+
+export const validateSubmitContactForm = [
+    body('fullName')
+        .notEmpty()
+        .withMessage('Full name is required')
+        .isString()
+        .withMessage('Full name must be a string')
+        .trim()
+        .isLength({ min: 2, max: 100 })
+        .withMessage('Full name must be between 2 and 100 characters'),
+    body('email')
+        .notEmpty()
+        .withMessage('Email is required')
+        .isEmail()
+        .withMessage('Must be a valid email address')
+        .normalizeEmail(),
+    body('phone')
+        .optional()
+        .isString()
+        .withMessage('Phone must be a string')
+        .trim(),
+    body('subject')
+        .notEmpty()
+        .withMessage('Subject is required')
+        .isString()
+        .withMessage('Subject must be a string')
+        .trim()
+        .isIn(['enrollment', 'tour', 'general', 'feedback', 'other'])
+        .withMessage('Subject must be one of: Enrollment Inquiry, Schedule a Tour, General Question, Feedback, Other'),
+    body('message')
+        .notEmpty()
+        .withMessage('Message is required')
+        .isString()
+        .withMessage('Message must be a string')
+        .trim()
+        .isLength({ min: 10, max: 2000 })
+        .withMessage('Message must be between 10 and 2000 characters'),
+];

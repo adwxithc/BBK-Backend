@@ -2,12 +2,14 @@ import { Router } from 'express';
 import { asyncHandler } from '@common/utils/asyncHandler';
 import publicEventController from '../controller/publicEventController';
 import publicEventCategoryController from '../controller/publicEventCategoryController';
+import publicContactFormController from '../controller/publicContactFormController';
 import { validateRequest } from '@common/middlewares/validateRequest';
 import {
     validateGetEventCategories,
     validateGetEventsByCategory,
     validateGetPublishedEvent,
     validateGetPublishedEvents,
+    validateSubmitContactForm,
 } from 'public/validations/api';
 
 export const publicRouter = (router: Router) => {
@@ -43,6 +45,14 @@ export const publicRouter = (router: Router) => {
         validateGetEventCategories,
         validateRequest,
         asyncHandler(publicEventCategoryController.getAllActiveCategories)
+    );
+
+    // Contact form route
+    router.post(
+        '/contact',
+        validateSubmitContactForm,
+        validateRequest,
+        asyncHandler(publicContactFormController.submitContactForm)
     );
 
     return router;
