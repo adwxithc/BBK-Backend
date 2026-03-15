@@ -1,4 +1,4 @@
-# BBK Backend Deployment Guide
+# Deployment Guide
 
 ## Prerequisites
 
