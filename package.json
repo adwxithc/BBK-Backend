@@ -18,7 +18,15 @@
   "main": "handler.js",
   "scripts": {
     "dev": "serverless offline --httpPort 4000",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:prod": "serverless deploy --stage prod --aws-profile bbk-prod-admin",
+    "domain:create:prod": "serverless create_domain --stage prod --aws-profile bbk-prod-admin",
+    "domain:delete:prod": "serverless delete_domain --stage prod --aws-profile bbk-prod-admin",
+    "info:dev": "serverless info --stage dev",
+    "info:prod": "serverless info --stage prod --aws-profile bbk-prod-admin",
+    "remove:dev": "serverless remove --stage dev",
+    "remove:prod": "serverless remove --stage prod --aws-profile bbk-prod-admin"
   },
   "author": "",
   "license": "ISC",

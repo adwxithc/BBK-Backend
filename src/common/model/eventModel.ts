@@ -100,7 +100,6 @@ eventSchema.index({ categoryId: 1 });
 eventSchema.index({ status: 1 });
 eventSchema.index({ featured: 1 });
 eventSchema.index({ date: 1 });
-eventSchema.index({ slug: 1 });
 // Regular indexes for regex search performance
 eventSchema.index({ title: 1 });
 eventSchema.index({ description: 1 });

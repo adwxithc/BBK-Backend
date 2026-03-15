@@ -1,7 +1,7 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: brototype
+# org: brototype
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
-app: bbk
+# app: bbk
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: bbk-admin
 
@@ -9,7 +9,7 @@ provider:
   name: aws
   runtime: nodejs22.x
   region: ap-south-1
-  stage: dev
+  stage: ${opt:stage, 'dev'}
   environment:
     MONGO_URI: ${env:MONGO_URI}
     JWT_KEY: ${env:JWT_KEY}
@@ -35,14 +35,19 @@ provider:
 
 custom:
   customDomain:
-    domainName: api.bbk.adwaith.store
-    certificateName: api.bbk.adwaith.store
+    enabled: ${self:custom.domainEnabled.${self:provider.stage}, false}
+    domainName: api.bunnybabies.in
+    certificateName: api.bunnybabies.in
     basePath: ''
     stage: ${self:provider.stage}
     createRoute53Record: true
     endpointType: 'regional'
     securityPolicy: tls_1_2
     apiType: http
+  
+  domainEnabled:
+    dev: false
+    prod: true
 
 functions:
   adminApi:
